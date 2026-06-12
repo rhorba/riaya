@@ -13,8 +13,18 @@ const nextConfig: NextConfig = {
     "@riaya/verification",
     "@riaya/notifications",
   ],
-  experimental: {
-    typedRoutes: true,
+  // typedRoutes is intentionally off: with next-intl localePrefix "always",
+  // links use locale-less hrefs (e.g. "/auth/signup") that the middleware
+  // prefixes at request time, which typedRoutes cannot statically verify.
+  // The codebase uses NodeNext-style `.js` import specifiers on `.ts` sources
+  // (works with Turbopack/tsx/Vitest). Teach the webpack production build to
+  // resolve `.js` → `.ts`/`.tsx`, falling back to real `.js` in node_modules.
+  webpack: (config) => {
+    config.resolve.extensionAlias = {
+      ".js": [".ts", ".tsx", ".js"],
+      ".mjs": [".mts", ".mjs"],
+    };
+    return config;
   },
 };
 
