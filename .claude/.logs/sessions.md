@@ -33,10 +33,23 @@ S0-11 (shadcn) DEFERRED — not DoD-blocking (tokens in globals.css; forms on pl
 2. withUserContext() passes scoped tx into fn(tx) + parameterized set_config. rls.test.ts rewritten to drive REAL db+withUserContext. 17/17 green (skips cleanly w/o DB env).
 ENV MODEL CHANGED: DATABASE_URL=riaya_app, DATABASE_URL_ADMIN=superuser (see .env.example).
 
+GIT + CI (end of session):
+- Repo initialized and pushed to https://github.com/rhorba/riaya (branch main). gh auth = account `rhorba`. git identity: rhorba / mohamedd.rhorba@gmail.com.
+- .env is gitignored (verified no secrets committed). .gitignore fixed: COMMIT drizzle/meta (journal needed by migrator in CI); ignore next-env.d.ts + *.stackdump.
+- CI is GREEN (run 27427042202). Fixes required to get there (all committed):
+  1. ci.yml: removed `version: 10` from pnpm/action-setup (conflicted with packageManager in package.json) — read version from package.json.
+  2. migrate.ts: now CREATE EXTENSION IF NOT EXISTS uuid-ossp/vector/pg_trgm (CI postgres service doesn't run sql/init.sql → "type vector does not exist").
+  3. Production (webpack) build fixes the dev --turbopack server HID:
+     - Deleted apps/web/src/app/page.tsx (root `/` redirect; broke build w/ no root layout; next-intl middleware already redirects / → /fr).
+     - next.config.ts: added webpack `extensionAlias` { ".js": [".ts",".tsx",".js"], ".mjs": [...] } so NodeNext .js specifiers resolve under webpack (not just Turbopack).
+     - next.config.ts: disabled typedRoutes (incompatible with next-intl locale-less hrefs like "/auth/signup").
+- NOTE: `next build` reformats apps/web/tsconfig.json + adds incremental:true, and biome reformats it back — harmless loop; in CI lint runs before build so it stays clean. Latest commit a4c59ae.
+
 RESUME INSTRUCTIONS:
-1. Invoke orchestrator. SPRINT BOUNDARY — Sprint 0 done + findings fixed. Get Sprint 1 approval.
+1. Invoke orchestrator. SPRINT BOUNDARY — Sprint 0 done + findings fixed + on GitHub w/ green CI. Get Sprint 1 approval.
 2. Sprint 1 = Data model + profiles (caregiver/family/employer) + demo seed. ALL feature data access goes through `db` + withUserContext (NEVER authDb — that's auth/system only).
 3. To run locally: `docker compose up -d postgres` (port 5439); set BOTH DATABASE_URL (riaya_app) + DATABASE_URL_ADMIN (superuser); `pnpm --filter @riaya/db db:migrate`; `pnpm dev`. rls.sql not idempotent → reset with `docker compose down -v` before re-migrating a dirty DB.
+4. Lesson for Sprint 1+: verify with `pnpm build` (webpack), not just dev/turbopack — prod build catches .js-resolution + layout issues the dev server hides.
 
 ---
 
