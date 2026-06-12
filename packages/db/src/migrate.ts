@@ -14,10 +14,13 @@ if (!connectionString) throw new Error("DATABASE_URL_ADMIN or DATABASE_URL is no
 const sql = postgres(connectionString, { max: 1 });
 const db = drizzle(sql);
 
-// Ensure the non-superuser app role exists (idempotent) — so this works in CI
-// where sql/init.sql is not mounted into the Postgres service.
-console.log("Ensuring app role...");
+// Ensure extensions + the non-superuser app role exist (idempotent) — so this
+// works in CI where sql/init.sql is not mounted into the Postgres service.
+console.log("Ensuring extensions + app role...");
 await sql.unsafe(`
+  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+  CREATE EXTENSION IF NOT EXISTS vector;
+  CREATE EXTENSION IF NOT EXISTS pg_trgm;
   DO $$
   BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'riaya_app') THEN
