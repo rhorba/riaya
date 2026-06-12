@@ -1,0 +1,47 @@
+{
+  "home": {
+    "tagline": "Votre enfant en bonnes mains. Vous, libre de travailler.",
+    "findCaregiver": "Trouver une assistante",
+    "joinAsCaregiver": "Rejoindre en tant qu'assistante"
+  },
+  "auth": {
+    "signin": "Se connecter",
+    "signup": "Créer un compte",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "name": "Nom complet",
+    "role": {
+      "label": "Je suis",
+      "family": "Une famille",
+      "caregiver": "Une assistante",
+      "employer": "Un employeur"
+    },
+    "alreadyHaveAccount": "Déjà inscrit ?",
+    "noAccount": "Pas encore de compte ?",
+    "continueWithGoogle": "Continuer avec Google",
+    "errors": {
+      "invalidCredentials": "Email ou mot de passe incorrect.",
+      "emailTaken": "Cette adresse e-mail est déjà utilisée."
+    }
+  },
+  "nav": {
+    "search": "Rechercher",
+    "dashboard": "Mon espace",
+    "signout": "Déconnexion",
+    "signin": "Se connecter",
+    "signup": "Créer un compte",
+    "roles": {
+      "family": "Famille",
+      "caregiver": "Assistante",
+      "employer": "Employeur",
+      "admin": "Admin"
+    }
+  },
+  "verification": {
+    "unverified": "Non vérifiée",
+    "id_checked": "Identité déposée",
+    "cin_verified": "CIN vérifiée",
+    "background_cleared": "Casier vierge",
+    "certified": "Certifiée"
+  }
+}

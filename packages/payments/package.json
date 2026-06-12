@@ -1,0 +1,16 @@
+{
+  "name": "@riaya/payments",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@riaya/core": "workspace:*",
+    "@riaya/db": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

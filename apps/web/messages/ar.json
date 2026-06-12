@@ -1,0 +1,47 @@
+{
+  "home": {
+    "tagline": "طفلك في أيدٍ أمينة. وأنتِ حرة للعمل.",
+    "findCaregiver": "ابحثي عن مربية",
+    "joinAsCaregiver": "انضمي كمربية"
+  },
+  "auth": {
+    "signin": "تسجيل الدخول",
+    "signup": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "name": "الاسم الكامل",
+    "role": {
+      "label": "أنا",
+      "family": "أسرة",
+      "caregiver": "مربية",
+      "employer": "صاحب عمل"
+    },
+    "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "noAccount": "ليس لديك حساب؟",
+    "continueWithGoogle": "المتابعة مع Google",
+    "errors": {
+      "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+      "emailTaken": "هذا البريد الإلكتروني مستخدم بالفعل."
+    }
+  },
+  "nav": {
+    "search": "بحث",
+    "dashboard": "لوحة التحكم",
+    "signout": "تسجيل الخروج",
+    "signin": "تسجيل الدخول",
+    "signup": "إنشاء حساب",
+    "roles": {
+      "family": "أسرة",
+      "caregiver": "مربية",
+      "employer": "صاحب عمل",
+      "admin": "مشرف"
+    }
+  },
+  "verification": {
+    "unverified": "غير موثقة",
+    "id_checked": "الهوية مقدمة",
+    "cin_verified": "CIN موثقة",
+    "background_cleared": "السجل نظيف",
+    "certified": "معتمدة"
+  }
+}

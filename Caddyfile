@@ -1,0 +1,6 @@
+# Riaya reverse proxy. For local full-stack runs use http://localhost.
+# In production replace `:80` with `riaya.ma` for automatic HTTPS.
+:80 {
+	encode gzip zstd
+	reverse_proxy web:3000
+}

@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Riaya brand palette ──────────────────────────────────────────────── */
+  --color-terracotta-50: #fdf5f0;
+  --color-terracotta-100: #fbe8da;
+  --color-terracotta-200: #f6cfb5;
+  --color-terracotta-300: #f0ae87;
+  --color-terracotta-400: #e8855a;
+  --color-terracotta-500: #c96a3a;
+  --color-terracotta-600: #b05a2d;
+  --color-terracotta-700: #8f4621;
+  --color-terracotta-800: #6e3318;
+  --color-terracotta-900: #4e2310;
+
+  --color-sage-50: #f4f7f4;
+  --color-sage-100: #e2ece2;
+  --color-sage-200: #c3d8c3;
+  --color-sage-300: #9bbf9b;
+  --color-sage-400: #72a272;
+  --color-sage-500: #4d864d;
+  --color-sage-600: #3d6e3d;
+  --color-sage-700: #2f572f;
+  --color-sage-800: #224022;
+  --color-sage-900: #162916;
+
+  --color-cream-50: #fefcf8;
+  --color-cream-100: #fdf6e8;
+  --color-cream-200: #faecd1;
+  --color-cream-300: #f5dfa8;
+  --color-cream-400: #edcc76;
+  --color-cream-500: #d4a832;
+
+  /* Semantic aliases */
+  --color-primary: var(--color-terracotta-500);
+  --color-primary-hover: var(--color-terracotta-600);
+  --color-secondary: var(--color-sage-500);
+  --color-surface: var(--color-cream-50);
+  --color-muted: #6b7280;
+
+  /* ── Typography ───────────────────────────────────────────────────────── */
+  --font-heading: "Lora", Georgia, serif;
+  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-arabic: "Noto Kufi Arabic", "Lora", serif;
+
+  /* ── Radii ─────────────────────────────────────────────────────────────── */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: var(--font-body);
+    background-color: var(--color-surface);
+    color: #1f2937;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  html[lang="ar"] {
+    font-family: var(--font-arabic);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+  }
+
+  /* RTL-aware spacing */
+  [dir="rtl"] {
+    text-align: right;
+  }
+}

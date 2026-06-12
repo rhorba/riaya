@@ -1,0 +1,47 @@
+{
+  "home": {
+    "tagline": "Your child in safe hands. You, free to work.",
+    "findCaregiver": "Find a caregiver",
+    "joinAsCaregiver": "Join as a caregiver"
+  },
+  "auth": {
+    "signin": "Sign in",
+    "signup": "Create account",
+    "email": "Email address",
+    "password": "Password",
+    "name": "Full name",
+    "role": {
+      "label": "I am",
+      "family": "A family",
+      "caregiver": "A caregiver",
+      "employer": "An employer"
+    },
+    "alreadyHaveAccount": "Already have an account?",
+    "noAccount": "No account yet?",
+    "continueWithGoogle": "Continue with Google",
+    "errors": {
+      "invalidCredentials": "Invalid email or password.",
+      "emailTaken": "This email is already taken."
+    }
+  },
+  "nav": {
+    "search": "Search",
+    "dashboard": "Dashboard",
+    "signout": "Sign out",
+    "signin": "Sign in",
+    "signup": "Create account",
+    "roles": {
+      "family": "Family",
+      "caregiver": "Caregiver",
+      "employer": "Employer",
+      "admin": "Admin"
+    }
+  },
+  "verification": {
+    "unverified": "Unverified",
+    "id_checked": "ID Submitted",
+    "cin_verified": "CIN Verified",
+    "background_cleared": "Background Cleared",
+    "certified": "Certified"
+  }
+}

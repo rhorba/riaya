@@ -1,0 +1,17 @@
+{
+  "name": "@riaya/notifications",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@riaya/core": "workspace:*",
+    "@riaya/db": "workspace:*",
+    "resend": "^4.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,81 @@
+# Riaya — local dev & full-stack containers.
+#
+#   Local dev (default):   docker compose up -d        → Postgres+pgvector only,
+#                          then `pnpm dev` on the host.
+#   Full stack:            docker compose --profile full up -d --build
+#
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: riaya-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: riaya
+      POSTGRES_PASSWORD: riaya
+      POSTGRES_DB: riaya
+    ports:
+      # Host port 5439 avoids collisions with other local Postgres instances.
+      - "5439:5432"
+    volumes:
+      - riaya-pgdata:/var/lib/postgresql/data
+      # init.sql installs the `vector` + `pg_trgm` extensions and the
+      # RLS-bound `riaya_app` role on first boot.
+      - ./packages/db/sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U riaya -d riaya"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: riaya-web
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://riaya_app:change-me-in-production@postgres:5432/riaya
+      DATABASE_URL_ADMIN: postgresql://riaya:riaya@postgres:5432/riaya
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "3000"
+
+  worker:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: riaya-worker
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # The worker performs system writes (escrow/audit sweeps) without a user
+      # context, so it uses the privileged connection.
+      DATABASE_URL: postgresql://riaya:riaya@postgres:5432/riaya
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  caddy:
+    profiles: ["full"]
+    image: caddy:2-alpine
+    container_name: riaya-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - riaya-caddy-data:/data
+      - riaya-caddy-config:/config
+    depends_on:
+      - web
+
+volumes:
+  riaya-pgdata:
+  riaya-caddy-data:
+  riaya-caddy-config:

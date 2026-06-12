@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: riaya
+          POSTGRES_PASSWORD: riaya
+          POSTGRES_DB: riaya
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U riaya -d riaya"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # App connection (riaya_app, RLS enforced) — created by db:migrate.
+      DATABASE_URL: postgresql://riaya_app:change-me-in-production@localhost:5432/riaya
+      # Privileged connection (superuser) — migrations + auth + RLS-test fixtures.
+      DATABASE_URL_ADMIN: postgresql://riaya:riaya@localhost:5432/riaya
+      AUTH_SECRET: ci-test-secret-not-used-in-prod
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (Biome)
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm -r --if-present typecheck
+
+      - name: Apply DB schema + RLS
+        run: pnpm --filter @riaya/db db:migrate
+
+      - name: Unit tests (Vitest)
+        run: pnpm test
+
+      - name: Build (web)
+        run: pnpm build
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
