@@ -1,6 +1,55 @@
 # sessions
 <!-- append-only log — session start/end snapshots -->
 
+## SESSION_END — 2026-06-14 (c) — SPRINT 2 COMPLETE ✅
+
+Sprint: 2 — DONE (public caregiver search + full booking lifecycle). Built on the `sprint-1` branch per user decision ("just push sprint 1 and go for sprint 2"). Awaiting Sprint 3 approval.
+
+Completed this session (S2-01..S2-12):
+- **@riaya/booking** package built: `state-machine.ts` (strict transition table + `canTransition`/`assertTransition`/`actorCanTransition`), `availability.ts` (`checkAvailability` overlap vs confirmed/in_progress), `pricing.ts` (`computeBookingAmount`/`durationMinutes`). Barrel `.` + subpath exports `./pricing`, `./state-machine`.
+- **Migration 0004** (`0004_busy_silver_fox`): `btree_gist` + GiST `EXCLUDE` constraint `bookings_no_overlap` (no two confirmed/in_progress overlap per caregiver) + `family_ended_at`/`caregiver_ended_at` columns. Journal + schema updated; `init.sql`/`migrate.ts` ensure `btree_gist`.
+- **Backend actions**: family `requestBooking`/`startSession`/`familyConfirmEnd`/`cancelBooking`/`getMyBookings`; caregiver `acceptBooking`/`declineBooking`/`caregiverConfirmEnd`/`getCaregiverBookings`. Shared `lib/booking-shared.ts` (`auditBooking`, `confirmSessionEnd`). All via `withRoleTx`; AuditLog atomic with each mutation.
+- **Public search** `/[locale]/(public)/search` (SSR, no-JS GET filter form): careType / city (ILIKE on neighborhoods) / max hourly rate / min verification (ordered "at least") + pagination + SEO. `CaregiverCard` component.
+- **Booking UI**: family request form (date/time/children/notes/urgent + live estimate), caregiver inbox (accept/decline-with-reason/confirm-end), family tracker (start/confirm-end/cancel), `BookingStatusBadge`. "Request a booking" CTA on public profile; role-aware nav links.
+- **i18n** fr/ar/en: `search`, `booking`, `bookingStatus`, `bookingErrors` + nav.
+- **Tests**: state-machine (8) + pricing (6) pure; booking-RLS (5: caregiver-can't-book, family-can't-book-for-other, scoped read, **exclusion-constraint double-booking blocked**, requested-doesn't-block) + availability (3) live-DB. Total **43/43**.
+- Snapshot: `.claude/.logs/sprint-2-snapshot.md`.
+
+KEY DECISIONS:
+- No-double-booking = DB exclusion constraint (hard) + app `checkAvailability` (friendly). `requested` overlaps allowed; only one confirms.
+- `@riaya/booking` barrel pulls in `@riaya/db` (postgres/Node) → client components import pure helpers from `@riaya/booking/pricing` only (fixed webpack `tls`/`fs` client-bundle error).
+- `checkAvailability` is role-scoped: authoritative under caregiver context (sees all own bookings); best-effort under family context (privacy — families don't see a caregiver's other clients). Constraint is the backstop.
+- Caregiver inbox shows NO family identity / children PII.
+- In-app notification rows deferred to Sprint 5 (avoids cross-user insert / authDb); inbox+tracker are the surfaces.
+
+VERIFIED: `pnpm lint` (biome 106 files) clean; `pnpm -r typecheck` clean; `pnpm test` 43/43; `pnpm --filter @riaya/web build` (webpack) passes; fresh-DB migrate (0000–0004)+RLS+seed clean. Build + migrate/seed/tests need `DATABASE_URL`+`DATABASE_URL_ADMIN` exported (no dotenv autoload).
+
+RESUME INSTRUCTIONS:
+1. Invoke orchestrator. SPRINT BOUNDARY — Sprint 2 done on `sprint-1` branch. Get Sprint 3 approval.
+2. Sprint 3 = Availability calendar (caregiver-set `availability_slots`, already in schema) + booking state machine integration + AI matching (pgvector). Extend `checkAvailability` to honor published slots.
+3. Local run: `docker compose up -d postgres` (5439); export `DATABASE_URL`(riaya_app)+`DATABASE_URL_ADMIN`(riaya:riaya); `db:migrate` → `db:seed`; `pnpm dev`. rls.sql non-idempotent → `docker compose down -v` to re-migrate a dirty DB.
+4. Carry-forward: no 0004 drizzle snapshot (hand-written EXCLUDE) — future `generate` may re-add columns; cancellation fee not applied; availability calendar unused.
+
+## SESSION_END — 2026-06-14 (b) — SPRINT 1 COMMITTED + PUSHED ✅
+
+Sprint: 1 — DONE and now on remote. Still holding at sprint boundary (Sprint 2 NOT started — user chose "not yet").
+
+This (short) session:
+- Orchestrator resumed; confirmed Sprint 1 complete (21/21 green, build clean), local-only.
+- User chose: commit + push sprint-1; do NOT start Sprint 2 yet.
+- Committed all Sprint 1 work as `10d8181` ("Sprint 1: data model + profiles ... + demo seed", 37 files, +9570).
+- Pushed `sprint-1` → `origin/sprint-1` (upstream now tracked). PR not opened.
+- Note: a stale `.git/index.lock` blocked the first commit; removed it (`rm -f .git/index.lock`) and retried — succeeded. Git emitted LF→CRLF normalization warnings (cosmetic only).
+
+GIT STATE NOW:
+- `origin/sprint-1` @ `10d8181` (Sprint 1). `main` still @ `c5b94f5` (Sprint 0). No PR open yet.
+
+RESUME INSTRUCTIONS:
+1. Invoke orchestrator. SPRINT BOUNDARY — Sprint 1 done + pushed.
+2. Open decisions: (a) open PR sprint-1 → main now, or keep stacking sprints on the branch? (b) Sprint 2 kickoff approval.
+3. Sprint 2 = Caregiver search (public SSR, filterable type/city/price/verification) + booking system (request→confirm→complete). CaregiverSearchSchema + BookingRequestSchema already in @riaya/core.
+4. Local run unchanged: `docker compose up -d postgres` (5439); export DATABASE_URL + DATABASE_URL_ADMIN; `db:migrate` → `db:seed`; `pnpm dev`.
+
 ## SESSION_START — PROJECT INITIALIZED
 Sprint: 0 — Ready to start
 Status: Fresh project. Framework scaffolded. All S0 tasks pending.

@@ -7,6 +7,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "vector";          -- pgvector for caregiver matching
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";         -- trigram for name search
+CREATE EXTENSION IF NOT EXISTS "btree_gist";      -- GiST equality for booking no-overlap EXCLUDE
 
 -- App role (used by the application; not a superuser)
 DO $$

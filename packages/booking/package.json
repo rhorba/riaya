@@ -4,11 +4,14 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./pricing": "./src/pricing.ts",
+    "./state-machine": "./src/state-machine.ts"
   },
   "dependencies": {
     "@riaya/core": "workspace:*",
-    "@riaya/db": "workspace:*"
+    "@riaya/db": "workspace:*",
+    "drizzle-orm": "^0.38.2"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

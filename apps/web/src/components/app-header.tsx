@@ -29,6 +29,22 @@ export async function AppHeader() {
 
           {user ? (
             <>
+              {user.role === "family" && (
+                <Link
+                  href="/family/bookings"
+                  className="text-gray-600 hover:text-[var(--color-terracotta-600)]"
+                >
+                  {t("myBookings")}
+                </Link>
+              )}
+              {user.role === "caregiver" && (
+                <Link
+                  href="/caregiver/bookings"
+                  className="text-gray-600 hover:text-[var(--color-terracotta-600)]"
+                >
+                  {t("inbox")}
+                </Link>
+              )}
               <span className="rounded-full bg-[var(--color-sage-50)] px-3 py-1 text-xs font-medium text-[var(--color-sage-600)]">
                 {t(`roles.${user.role}`)}
               </span>

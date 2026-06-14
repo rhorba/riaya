@@ -1,2 +1,12 @@
-// Booking state machine + availability logic — implemented in Sprint 3
-export {};
+// Booking state machine + availability + pricing (Module D, Sprint 2).
+export {
+  type BookingStatus,
+  type TransitionActor,
+  isTerminal,
+  canTransition,
+  actorCanTransition,
+  assertTransition,
+  BookingTransitionError,
+} from "./state-machine.js";
+export { type AvailabilityResult, checkAvailability } from "./availability.js";
+export { type CaregiverRates, computeBookingAmount, durationMinutes } from "./pricing.js";

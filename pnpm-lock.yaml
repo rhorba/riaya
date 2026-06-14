@@ -148,6 +148,9 @@ importers:
       '@riaya/db':
         specifier: workspace:*
         version: link:../db
+      drizzle-orm:
+        specifier: ^0.38.2
+        version: 0.38.4(@types/react@19.2.16)(pg@8.21.0)(postgres@3.4.9)(react@19.2.7)
     devDependencies:
       typescript:
         specifier: ^5.7.2

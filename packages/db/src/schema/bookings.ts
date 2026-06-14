@@ -35,6 +35,11 @@ export const bookings = pgTable(
     familyNotes: text("family_notes"),
     cancelReason: text("cancel_reason"),
     urgent: boolean("urgent").default(false).notNull(),
+    // Session-end confirmation: in_progress → completed requires BOTH parties to
+    // confirm the session ended. Set when each side confirms; completion is the
+    // moment the second timestamp lands.
+    familyEndedAt: timestamp("family_ended_at", { withTimezone: true }),
+    caregiverEndedAt: timestamp("caregiver_ended_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -43,6 +48,10 @@ export const bookings = pgTable(
     index("idx_booking_family").on(t.familyId),
     index("idx_booking_status").on(t.status),
     index("idx_booking_start_time").on(t.startTime),
+    // NOTE: a GiST EXCLUDE constraint `bookings_no_overlap` (migration 0004)
+    // forbids two CONFIRMED/IN_PROGRESS bookings for the same caregiver from
+    // overlapping in time — the DB-level guarantee that one slot can't be
+    // double-booked. Drizzle can't express EXCLUDE, so it lives in raw SQL.
   ]
 );
 

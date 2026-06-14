@@ -4,6 +4,7 @@ import { caregiverProfiles, db } from "@riaya/db";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type Params = { locale: string; id: string };
@@ -139,6 +140,13 @@ export default async function CaregiverPublicProfile({
               <Rate value={caregiver.monthlyRate} unit={t("perMonth")} />
             )}
           </div>
+
+          <Link
+            href={`/family/book/${caregiver.id}`}
+            className="block w-full rounded-lg bg-[var(--color-terracotta-500)] px-5 py-3 text-center font-medium text-white transition-colors hover:bg-[var(--color-terracotta-600)]"
+          >
+            {t("requestBooking")}
+          </Link>
         </div>
       </div>
     </main>
