@@ -51,6 +51,20 @@ export const escrowStatusEnum = pgEnum("escrow_status", [
   "disputed",
 ]);
 
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "booking_requested",
+  "booking_confirmed",
+  "booking_declined",
+  "booking_reminder",
+  "session_started",
+  "session_ended",
+  "payment_released",
+  "review_request",
+  "document_approved",
+  "document_rejected",
+  "dispute_opened",
+]);
+
 export const auditActionEnum = pgEnum("audit_action", [
   "create",
   "update",

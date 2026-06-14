@@ -24,6 +24,7 @@ const id = {
   familyBUser: randomUUID(),
   familyBProfile: randomUUID(),
   admin: randomUUID(),
+  notifA: randomUUID(),
 };
 
 describe.skipIf(!HAS_DB)("RLS role isolation (S0-16)", () => {
@@ -31,7 +32,14 @@ describe.skipIf(!HAS_DB)("RLS role isolation (S0-16)", () => {
 
   beforeAll(async () => {
     m = await import("./index.js");
-    const { authDb, users, caregiverProfiles, verificationDocuments, familyProfiles } = m;
+    const {
+      authDb,
+      users,
+      caregiverProfiles,
+      verificationDocuments,
+      familyProfiles,
+      notifications,
+    } = m;
 
     const tag = Date.now();
     await authDb.insert(users).values([
@@ -59,6 +67,13 @@ describe.skipIf(!HAS_DB)("RLS role isolation (S0-16)", () => {
       },
       { id: id.familyBProfile, userId: id.familyBUser, city: "Rabat", children: [] },
     ]);
+    await authDb.insert(notifications).values({
+      id: id.notifA,
+      userId: id.familyAUser,
+      type: "booking_confirmed",
+      title: "Réservation confirmée",
+      body: "Votre réservation est confirmée.",
+    });
   });
 
   afterAll(async () => {
@@ -121,6 +136,46 @@ describe.skipIf(!HAS_DB)("RLS role isolation (S0-16)", () => {
         .select({ id: familyProfiles.id })
         .from(familyProfiles)
         .where(eq(familyProfiles.id, id.familyAProfile))
+    );
+    expect(rows).toHaveLength(1);
+  });
+
+  it("family CANNOT edit a caregiver's profile (S1-13)", async () => {
+    const { db, withUserContext, caregiverProfiles } = m;
+    // caregiver_update USING (user_id = app_user) filters the row out for a family
+    // who isn't the owner → 0 rows affected, the bio is never changed.
+    const updated = await withUserContext(db, id.familyAUser, "family", (tx) =>
+      tx
+        .update(caregiverProfiles)
+        .set({ bio: "hacked" })
+        .where(eq(caregiverProfiles.id, id.caregiverProfile))
+        .returning({ id: caregiverProfiles.id })
+    );
+    expect(updated).toHaveLength(0);
+  });
+
+  it("family CANNOT create a caregiver profile for another user (S1-13)", async () => {
+    const { db, withUserContext, caregiverProfiles } = m;
+    // caregiver_write WITH CHECK (user_id = app_user) rejects a profile owned by someone else.
+    await expect(
+      withUserContext(db, id.familyAUser, "family", (tx) =>
+        tx.insert(caregiverProfiles).values({ userId: id.caregiverUser })
+      )
+    ).rejects.toThrow();
+  });
+
+  it("user CANNOT read another user's notifications (S1-13)", async () => {
+    const { db, withUserContext, notifications } = m;
+    const rows = await withUserContext(db, id.familyBUser, "family", (tx) =>
+      tx.select({ id: notifications.id }).from(notifications).where(eq(notifications.id, id.notifA))
+    );
+    expect(rows).toHaveLength(0);
+  });
+
+  it("user CAN read their own notifications (S1-13)", async () => {
+    const { db, withUserContext, notifications } = m;
+    const rows = await withUserContext(db, id.familyAUser, "family", (tx) =>
+      tx.select({ id: notifications.id }).from(notifications).where(eq(notifications.id, id.notifA))
     );
     expect(rows).toHaveLength(1);
   });

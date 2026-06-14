@@ -111,7 +111,7 @@ export const EnrolledEmployeeSchema = z.object({
 
 export const BookingRequestSchema = z
   .object({
-    caregiverId: z.string().cuid2(),
+    caregiverId: z.string().uuid(),
     careType: CareTypeSchema,
     startTime: z.coerce.date(),
     endTime: z.coerce.date(),
@@ -144,7 +144,7 @@ export const CaregiverSearchSchema = z.object({
 // ── Review ───────────────────────────────────────────────────────────────────
 
 export const ReviewCreateSchema = z.object({
-  bookingId: z.string().cuid2(),
+  bookingId: z.string().uuid(),
   rating: z.number().int().min(1).max(5),
   comment: z.string().max(1000).optional(),
 });

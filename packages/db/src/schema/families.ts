@@ -7,7 +7,7 @@ type ChildRecord = {
   id: string;
   name: string;
   ageMonths: number;
-  specialNeeds?: string;
+  specialNeeds?: string | undefined;
 };
 
 export const familyProfiles = pgTable(

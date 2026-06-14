@@ -27,3 +27,17 @@ Context: (1) Dual connection in packages/db/client.ts — `db`=riaya_app (RLS en
 Verified: fresh DB (docker compose down -v → up → db:migrate clean). pnpm lint CLEAN (73), pnpm -r typecheck CLEAN, pnpm test 17/17 with both URLs (rls.test.ts rewritten to drive REAL db+withUserContext + a test proving app role cannot self-insert admin), and skips cleanly (6 skipped) without DB env.
 Need: (next session) Sprint 1 approval — data model + caregiver/family/employer profiles + demo seed. All feature data access must go through `db` + withUserContext (never authDb). authDb is auth/system-only.
 Constraints: rls.sql is NOT idempotent (CREATE POLICY) — re-migrate needs a fresh DB; idempotency is backlog. PII/escrow/booking still unbuilt.
+
+HANDOFF: DBA + Backend Dev → Frontend Dev + Content Editor + Tester (Sprint 1)
+Task: S1-01..06 + S1-11 DONE — schema gap closed + profile actions + demo seed
+Context: Added notifications table (+ notification_type enum) with recipient/admin-only RLS; added HNSW pgvector index on caregiver_profiles.skill_vector (vector_cosine_ops). Migrations 0001/0002 generated + applied to live DB. Fixed core schemas.ts ID validators cuid2→uuid (IDs are UUIDs). New server-action factory withRoleTx() (apps/web/src/lib/db.ts) = RBAC + withUserContext tx; ActionResult helper. Profile actions: (caregiver)/profile/actions.ts, (family)/profile/actions.ts (incl. add/update/removeChild, children get server-gen UUIDs), (employer)/account/actions.ts (create/setBudget/enroll/setEmployeeActive). Idempotent demo seed (packages/db/src/seed.ts, uses authDb): 8 caregivers/4 families/2 employers/3 enrolled — re-run stable. Logins all demo1234.
+Verified: pnpm -r typecheck CLEAN; pnpm test 17/17; fresh DB migrate clean; seed idempotent (counts stable).
+Need: (Frontend) S1-07..10 profile UI + public caregiver SSR page + verification badge. (Content) S1-12 FR/AR for care types + verification levels + profile fields. (Tester) S1-13 role-isolation: family≠edit caregiver, CIN doc 403, notifications isolation.
+Constraints: family children data = most sensitive; never list-render outside owner. Money is centimes — format on display only. exactOptionalPropertyTypes is ON (use `?: T | undefined` in shared types).
+
+HANDOFF: Frontend + Content + Tester → Project Monitor (SPRINT 1 COMPLETE)
+Task: S1-07..14 DONE — profile UIs + public SSR + verification badge + FR/AR + isolation tests + snapshot
+Context: VerificationBadge component (5 levels, color-coded, hero trust signal). Public caregiver SSR page /[locale]/caregivers/[id] reads `db` with NO user context (caregiver_read USING(true)); display_name/photo_url denormalized onto caregiver_profiles so the RLS-locked users table is never read publicly. Profile forms (caregiver/family/employer) on plain Tailwind + server actions via withRoleTx. Route groups required real path segments (collision fix). fr/ar/en expanded (careTypes, verificationDesc, all field labels). +4 RLS tests (21/21).
+Verified: lint clean (87), typecheck clean, test 21/21, webpack build passes, fresh-DB migrate+seed clean+idempotent.
+Need: (next session) commit+push Sprint 1; Sprint 2 = caregiver search (public SSR, filterable by type/city/price/verification) + booking system (request→confirm→complete). CaregiverSearchSchema + BookingRequestSchema already in @riaya/core.
+Constraints: all feature reads through `db`+withUserContext (or `db` w/o context only for public USING(true) tables); booking state machine lives in @riaya/booking (Sprint 2/3); money stays centimes.

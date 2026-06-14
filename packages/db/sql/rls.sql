@@ -209,6 +209,26 @@ CREATE POLICY access_audit_read ON access_audit_logs FOR SELECT
 CREATE POLICY access_audit_insert ON access_audit_logs FOR INSERT
   WITH CHECK (true);
 
+-- ── notifications ── recipient + admin only ───────────────────────────────
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications FORCE ROW LEVEL SECURITY;
+
+-- Recipient reads their own inbox; admins read all
+CREATE POLICY notifications_select ON notifications FOR SELECT
+  USING (user_id = app_user() OR is_admin());
+
+-- System creates notifications (server action under user/admin context);
+-- a notification can only be addressed to its recipient unless admin.
+CREATE POLICY notifications_insert ON notifications FOR INSERT
+  WITH CHECK (user_id = app_user() OR is_admin());
+
+-- Recipient marks own notifications read; admins may update any
+CREATE POLICY notifications_update ON notifications FOR UPDATE
+  USING (user_id = app_user() OR is_admin());
+
+CREATE POLICY notifications_delete ON notifications FOR DELETE
+  USING (user_id = app_user() OR is_admin());
+
 -- ── availability_slots ────────────────────────────────────────────────────
 ALTER TABLE availability_slots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE availability_slots FORCE ROW LEVEL SECURITY;

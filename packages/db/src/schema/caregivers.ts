@@ -20,6 +20,10 @@ export const caregiverProfiles = pgTable(
       .notNull()
       .unique()
       .references(() => users.id, { onDelete: "cascade" }),
+    // Public display name + photo (denormalized so the public SSR profile never
+    // needs to read the RLS-protected users table). Photo lives in the PUBLIC R2 bucket.
+    displayName: text("display_name").notNull().default(""),
+    photoUrl: text("photo_url"),
     bio: text("bio"),
     careTypes: careTypeEnum("care_types").array().notNull().default([]),
     cities: text("cities").array().notNull().default([]),
@@ -49,6 +53,8 @@ export const caregiverProfiles = pgTable(
     index("idx_caregiver_user_id").on(t.userId),
     index("idx_caregiver_verification").on(t.verificationLevel),
     index("idx_caregiver_rating").on(t.avgRating),
+    // pgvector ANN index for caregiver matching (cosine distance). Used by @riaya/matching.
+    index("idx_caregiver_skill_vector").using("hnsw", t.skillVector.op("vector_cosine_ops")),
   ]
 );
 

@@ -10,6 +10,38 @@ Next: Begin S0-01 (pnpm workspace) → S0-06 (pgvector extension) → S0-07 (Aut
 
 ---
 
+## SESSION_END — 2026-06-14 — SPRINT 1 COMPLETE ✅
+
+Sprint: 1 — DONE (goal met; awaiting Sprint 2 approval)
+Completed this session (S1-01..S1-14):
+- S1-01 schema: added `notifications` table + `notification_type` enum (recipient/admin-only RLS). Sprint-0 schema already covered the rest. Migrations 0001 (notifications), 0002 (HNSW vector idx), 0003 (caregiver display_name/photo_url).
+- S1-02: HNSW index on caregiver_profiles.skill_vector (vector_cosine_ops).
+- S1-03: re-verified CIN docs strict RLS (owner+admin); notifications + new cols reviewed.
+- S1-04/05/06 backend actions via new `withRoleTx()` (apps/web/src/lib/db.ts = RBAC + withUserContext tx): caregiver (get/create/update), family (profile + add/update/removeChild, children get server UUIDs), employer (create/setBudget/enroll/setEmployeeActive). ActionResult helper (lib/action-result.ts).
+- S1-07/08/09/10 frontend: caregiver profile form, family profile + children mgmt, employer account + enrollment, public caregiver SSR page (/[locale]/caregivers/[id] + generateMetadata SEO + VerificationBadge component). Rates handled MAD↔centimes.
+- S1-11 idempotent demo seed (packages/db/src/seed.ts, uses authDb): 8 caregivers/4 families/2 employers/3 enrolled; logins demo1234 (sara@/fatima@/drh@demo-corp). Re-run stable.
+- S1-12 content: fr/ar/en — care types, verification levels (+descriptions), all profile/employer/public fields.
+- S1-13 tests: +4 RLS isolation (family≠edit caregiver, family≠create caregiver-for-other, notification cross-user). Total 21/21.
+- S1-14 snapshot: .claude/.logs/sprint-1-snapshot.md.
+
+KEY DECISIONS:
+- Denormalized `display_name`+`photo_url` onto caregiver_profiles so public SSR profile never reads the RLS-locked users table (strengthens isolation).
+- Route groups don't add URL segments → /profile collision. Fixed by nesting real segment: (caregiver)/caregiver/profile → /caregiver/profile (matches revalidatePath).
+- Fixed core schemas ID validators cuid2→uuid.
+- ChildRecord type uses `specialNeeds?: string | undefined` (exactOptionalPropertyTypes ON).
+
+VERIFIED: pnpm lint (biome 87 files) clean; pnpm -r typecheck clean; pnpm test 21/21; pnpm --filter @riaya/web build (webpack) passes; fresh-DB migrate(0000-0003)+RLS+seed clean + idempotent.
+
+NOT YET COMMITTED/PUSHED this session — Sprint 1 work is local only. (Sprint 0 was at commit a4c59ae / GREEN CI.)
+
+RESUME INSTRUCTIONS:
+1. Invoke orchestrator. SPRINT BOUNDARY — Sprint 1 done. Consider committing+pushing Sprint 1, then get Sprint 2 approval.
+2. Sprint 2 = Caregiver search (public SSR, filterable) + booking system (request→confirm→complete). CaregiverSearchSchema + BookingRequestSchema already exist in @riaya/core.
+3. Local run: `docker compose up -d postgres` (5439); set DATABASE_URL + DATABASE_URL_ADMIN (migrate/seed/tests don't auto-load .env — export them in shell first); `pnpm --filter @riaya/db db:migrate` then `db:seed`; `pnpm dev`.
+4. Carry-forward: caregiver photo upload (R2) not wired (placeholder); updateChild has no UI; enrolled_employees.userId linking deferred; rls.sql non-idempotent (fresh DB to re-migrate).
+
+---
+
 ## SESSION_END — 2026-06-12 — SPRINT 0 COMPLETE ✅
 
 Sprint: 0 — DONE (goal met; awaiting Sprint 1 approval)

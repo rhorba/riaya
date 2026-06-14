@@ -1,0 +1,1 @@
+CREATE INDEX "idx_caregiver_skill_vector" ON "caregiver_profiles" USING hnsw ("skill_vector" vector_cosine_ops);
