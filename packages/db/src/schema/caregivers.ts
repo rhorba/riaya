@@ -36,6 +36,9 @@ export const caregiverProfiles = pgTable(
     maxAgeYears: integer("max_age_years"),
     maxChildren: integer("max_children").default(1).notNull(),
     hasOwnSpace: boolean("has_own_space").default(false).notNull(),
+    // Cancellation policy: free if cancelled ≥ N hours before start; else fee % of gross.
+    cancellationFreeHours: integer("cancellation_free_hours").default(24).notNull(),
+    cancellationFeePercent: integer("cancellation_fee_percent").default(50).notNull(),
     verificationLevel: verificationLevelEnum("verification_level").default("unverified").notNull(),
     // avgRating: 0–500 (1–5 stars × 100 for integer precision)
     avgRating: integer("avg_rating").default(0).notNull(),

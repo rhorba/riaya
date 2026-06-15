@@ -20,6 +20,8 @@ type Initial = {
   maxAgeYears: number | null;
   maxChildren: number;
   hasOwnSpace: boolean;
+  cancellationFreeHours: number;
+  cancellationFeePercent: number;
 };
 
 // Centimes ↔ dirhams for display (rates are stored as integer centimes).
@@ -59,6 +61,12 @@ export function CaregiverProfileForm({ initial }: { initial: Initial | null }) {
   );
   const [maxChildren, setMaxChildren] = useState(String(initial?.maxChildren ?? 1));
   const [hasOwnSpace, setHasOwnSpace] = useState(initial?.hasOwnSpace ?? false);
+  const [cancellationFreeHours, setCancellationFreeHours] = useState(
+    String(initial?.cancellationFreeHours ?? 24)
+  );
+  const [cancellationFeePercent, setCancellationFeePercent] = useState(
+    String(initial?.cancellationFeePercent ?? 50)
+  );
 
   function toggleCareType(ct: CareType) {
     setCareTypes((prev) => (prev.includes(ct) ? prev.filter((x) => x !== ct) : [...prev, ct]));
@@ -81,6 +89,8 @@ export function CaregiverProfileForm({ initial }: { initial: Initial | null }) {
       maxAgeYears: maxAgeYears.trim() ? Number(maxAgeYears) : undefined,
       maxChildren: Number(maxChildren) || 1,
       hasOwnSpace,
+      cancellationFreeHours: Number(cancellationFreeHours) || 0,
+      cancellationFeePercent: Number(cancellationFeePercent) || 0,
     };
 
     startTransition(async () => {
@@ -183,6 +193,25 @@ export function CaregiverProfileForm({ initial }: { initial: Initial | null }) {
         />
         {t("hasOwnSpace")}
       </label>
+
+      <fieldset>
+        <legend className="mb-2 block text-sm font-medium text-gray-700">
+          {t("cancellationPolicy")}
+        </legend>
+        <p className="mb-2 text-xs text-gray-400">{t("cancellationHint")}</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <NumberField
+            label={t("cancellationFreeHours")}
+            value={cancellationFreeHours}
+            onChange={setCancellationFreeHours}
+          />
+          <NumberField
+            label={t("cancellationFeePercent")}
+            value={cancellationFeePercent}
+            onChange={setCancellationFeePercent}
+          />
+        </div>
+      </fieldset>
 
       <button
         type="submit"

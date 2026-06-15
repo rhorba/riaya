@@ -18,6 +18,8 @@
     "db:generate": "pnpm --filter @riaya/db db:generate",
     "db:migrate": "pnpm --filter @riaya/db db:migrate",
     "db:seed": "pnpm --filter @riaya/db db:seed",
+    "db:embed": "pnpm --filter @riaya/matching db:embed",
+    "db:setup": "pnpm db:migrate && pnpm db:seed && pnpm db:embed",
     "db:studio": "pnpm --filter @riaya/db db:studio",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },

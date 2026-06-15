@@ -2,6 +2,7 @@ import { hash } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import { authDb } from "./client.js";
 import {
+  availabilitySlots,
   caregiverProfiles,
   employerAccounts,
   enrolledEmployees,
@@ -315,6 +316,24 @@ const employerAccountsByEmail: Record<
   },
 };
 
+// ── Availability slots keyed by caregiver email ───────────────────────────────
+// Weekly recurring hours (dayOfWeek 0=Sun … 6=Sat). Caregivers WITHOUT an entry
+// here stay open (no calendar set) so the marketplace works either way.
+const availabilityByEmail: Record<string, { dayOfWeek: number; start: string; end: string }[]> = {
+  // Fatima — daya, mornings + afternoons Mon–Fri.
+  "fatima@demo.riaya.ma": [1, 2, 3, 4, 5].map((d) => ({
+    dayOfWeek: d,
+    start: "08:00",
+    end: "18:00",
+  })),
+  // Khadija — nanny, weekday afternoons.
+  "khadija@demo.riaya.ma": [1, 2, 3, 4, 5].map((d) => ({
+    dayOfWeek: d,
+    start: "13:00",
+    end: "19:00",
+  })),
+};
+
 async function upsertUser(s: Seedling, passwordHash: string): Promise<string> {
   await authDb
     .insert(users)
@@ -351,6 +370,35 @@ async function seed() {
         .insert(caregiverProfiles)
         .values({ userId, displayName: u.name, ...profile })
         .onConflictDoNothing({ target: caregiverProfiles.userId });
+    }
+
+    // Availability slots (idempotent: only seed when none exist for this caregiver).
+    const slots = availabilityByEmail[u.email];
+    if (slots) {
+      const [cg] = await authDb
+        .select({ id: caregiverProfiles.id })
+        .from(caregiverProfiles)
+        .where(eq(caregiverProfiles.userId, userId))
+        .limit(1);
+      if (cg) {
+        const existing = await authDb
+          .select({ id: availabilitySlots.id })
+          .from(availabilitySlots)
+          .where(eq(availabilitySlots.caregiverId, cg.id))
+          .limit(1);
+        if (existing.length === 0) {
+          await authDb.insert(availabilitySlots).values(
+            slots.map((s) => ({
+              caregiverId: cg.id,
+              dayOfWeek: s.dayOfWeek,
+              specificDate: null,
+              startTime: s.start,
+              endTime: s.end,
+              available: true,
+            }))
+          );
+        }
+      }
     }
   }
   console.log(`  ✓ ${caregiverUsers.length} caregivers`);

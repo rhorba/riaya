@@ -1,6 +1,12 @@
 "use client";
 
 import { computeBookingAmount, durationMinutes } from "@riaya/booking/pricing";
+import {
+  type AvailabilitySlot,
+  openRangesForDate,
+  utcDateParts,
+  windowCovered,
+} from "@riaya/booking/slots";
 import { type CareType, formatMoney, money } from "@riaya/core";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -13,6 +19,7 @@ type Props = {
   maxChildren: number;
   hourlyRate: number | null;
   dailyRate: number | null;
+  slots: AvailabilitySlot[];
 };
 
 export function BookingRequestForm({
@@ -21,6 +28,7 @@ export function BookingRequestForm({
   maxChildren,
   hourlyRate,
   dailyRate,
+  slots,
 }: Props) {
   const t = useTranslations("booking");
   const tc = useTranslations("careTypes");
@@ -46,6 +54,26 @@ export function BookingRequestForm({
     const mins = durationMinutes(s, e);
     return { mins, amount: computeBookingAmount({ hourlyRate, dailyRate }, mins) };
   }, [date, start, end, hourlyRate, dailyRate]);
+
+  const hasCalendar = slots.length > 0;
+
+  // Open ranges the caregiver published for the chosen date (for the picker).
+  const openRanges = useMemo(() => {
+    if (!date) return [];
+    return openRangesForDate(slots, date);
+  }, [date, slots]);
+
+  // Does the chosen window fall inside published availability? Mirrors the server
+  // check (UTC) so the hint matches what the request action will enforce.
+  const outsideAvailability = useMemo(() => {
+    if (!hasCalendar || !date) return false;
+    const s = new Date(`${date}T${start}`);
+    const e = new Date(`${date}T${end}`);
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e <= s) return false;
+    const sp = utcDateParts(s);
+    const ep = utcDateParts(e);
+    return sp.dateStr !== ep.dateStr || !windowCovered(slots, sp.dateStr, sp.time, ep.time);
+  }, [hasCalendar, date, start, end, slots]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -105,6 +133,33 @@ export function BookingRequestForm({
         />
       </Field>
 
+      {date && hasCalendar && (
+        <div className="rounded-lg bg-[var(--color-sage-50)] px-4 py-3">
+          <p className="mb-2 text-xs font-medium text-[var(--color-sage-700)]">
+            {t("openSlotsLabel")}
+          </p>
+          {openRanges.length === 0 ? (
+            <p className="text-sm text-gray-500">{t("noSlotsThatDay")}</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {openRanges.map((r) => (
+                <button
+                  key={`${r.startTime}-${r.endTime}`}
+                  type="button"
+                  onClick={() => {
+                    setStart(r.startTime);
+                    setEnd(r.endTime);
+                  }}
+                  className="rounded-full border border-[var(--color-sage-600)] bg-white px-3 py-1 text-sm text-[var(--color-sage-700)] hover:bg-[var(--color-sage-100)]"
+                >
+                  {r.startTime}–{r.endTime}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <Field label={t("startTime")}>
           <input
@@ -125,6 +180,12 @@ export function BookingRequestForm({
           />
         </Field>
       </div>
+
+      {outsideAvailability && (
+        <p className="rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-700">
+          {t("outsideAvailabilityHint")}
+        </p>
+      )}
 
       <Field label={t("childrenCount")}>
         <input

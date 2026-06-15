@@ -1,11 +1,11 @@
 import PgBoss from "pg-boss";
+import { sendBookingReminders } from "./reminders.js";
 
 /**
  * Riaya background worker (pg-boss).
  *
- * Sprint 0 wires the four queues and their schedules with stub handlers.
- * Real logic lands in later sprints:
- *   - booking.reminders  → Sprint 3/5 (remind family + caregiver 1h before)
+ * Queue handlers:
+ *   - booking.reminders  → Sprint 3 (remind family + caregiver ≤1h before) ✅
  *   - escrow.sweep       → Sprint 4   (release escrow after dispute window)
  *   - email.digest       → Sprint 5   (Resend digests)
  *   - employer.invoice   → Sprint 4/5 (monthly employer invoices)
@@ -32,7 +32,8 @@ async function main(): Promise<void> {
   }
 
   await boss.work(QUEUES.bookingReminders, async ([job]) => {
-    console.log("[booking.reminders] stub — job", job?.id);
+    const sent = await sendBookingReminders();
+    console.log(`[booking.reminders] job ${job?.id} — reminded ${sent} booking(s)`);
   });
   await boss.work(QUEUES.escrowSweep, async ([job]) => {
     console.log("[escrow.sweep] stub — job", job?.id);
@@ -45,6 +46,7 @@ async function main(): Promise<void> {
   });
 
   // Periodic sweeps (UTC cron). Cadence tuned in later sprints.
+  await boss.schedule(QUEUES.bookingReminders, "*/5 * * * *");
   await boss.schedule(QUEUES.escrowSweep, "*/15 * * * *");
   await boss.schedule(QUEUES.emailDigest, "0 8 * * *");
   await boss.schedule(QUEUES.employerInvoice, "0 2 1 * *");

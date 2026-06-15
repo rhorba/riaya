@@ -3,7 +3,14 @@
 import { type ActionResult, fail, ok } from "@/lib/action-result";
 import { auditBooking, confirmSessionEnd } from "@/lib/booking-shared";
 import { withRoleTx } from "@/lib/db";
-import { assertTransition, checkAvailability } from "@riaya/booking";
+import {
+  assertTransition,
+  checkAvailability,
+  computeBookingAmount,
+  computeCancellationFee,
+  durationMinutes,
+  hoursUntil,
+} from "@riaya/booking";
 import { BookingRequestSchema } from "@riaya/core";
 import { bookings, caregiverProfiles, familyProfiles } from "@riaya/db";
 import { desc, eq } from "drizzle-orm";
@@ -129,16 +136,48 @@ export const familyConfirmEnd = withRoleTx(
   }
 );
 
-/** Family cancels a requested or confirmed booking. */
+/**
+ * Family cancels a requested or confirmed booking. Cancelling a still-`requested`
+ * booking is always free. Cancelling a `confirmed` booking applies the caregiver's
+ * cancellation policy: free if outside the policy window, otherwise a fee (% of
+ * the estimated gross). The fee is computed and recorded on the audit trail here;
+ * actual money movement (escrow capture/refund) lands in Sprint 4.
+ */
 export const cancelBooking = withRoleTx(
   ["family"],
-  async (tx, user, bookingId: string, reason: string): Promise<ActionResult> => {
+  async (tx, user, bookingId: string, reason: string): Promise<ActionResult<{ fee: number }>> => {
     const [booking] = await tx.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
     if (!booking) return fail("bookingNotFound");
     if (booking.status !== "requested" && booking.status !== "confirmed") {
       return fail("invalidState");
     }
     assertTransition(booking.status, "cancelled");
+
+    let fee = 0;
+    if (booking.status === "confirmed") {
+      const [caregiver] = await tx
+        .select({
+          hourlyRate: caregiverProfiles.hourlyRate,
+          dailyRate: caregiverProfiles.dailyRate,
+          freeHours: caregiverProfiles.cancellationFreeHours,
+          feePercent: caregiverProfiles.cancellationFeePercent,
+        })
+        .from(caregiverProfiles)
+        .where(eq(caregiverProfiles.id, booking.caregiverId))
+        .limit(1);
+      if (caregiver) {
+        const gross = computeBookingAmount(
+          { hourlyRate: caregiver.hourlyRate, dailyRate: caregiver.dailyRate },
+          durationMinutes(booking.startTime, booking.endTime),
+          booking.careType
+        );
+        fee = computeCancellationFee(
+          { freeHours: caregiver.freeHours, feePercent: caregiver.feePercent },
+          gross,
+          hoursUntil(booking.startTime)
+        );
+      }
+    }
 
     await tx
       .update(bookings)
@@ -154,10 +193,10 @@ export const cancelBooking = withRoleTx(
       bookingId,
       "cancel",
       { status: booking.status },
-      { status: "cancelled" }
+      { status: "cancelled", cancellationFee: fee }
     );
 
     revalidatePath("/family/bookings");
-    return ok(undefined);
+    return ok({ fee });
   }
 );

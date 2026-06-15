@@ -1,5 +1,5 @@
 import { getSessionUser } from "@/lib/session";
-import { caregiverProfiles, db } from "@riaya/db";
+import { availabilitySlots, caregiverProfiles, db } from "@riaya/db";
 import { eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -44,6 +44,18 @@ export default async function BookCaregiverPage({
     .limit(1);
   if (!caregiver) notFound();
 
+  // Published availability (public read) for the family-side slot picker.
+  const slots = await db
+    .select({
+      dayOfWeek: availabilitySlots.dayOfWeek,
+      specificDate: availabilitySlots.specificDate,
+      startTime: availabilitySlots.startTime,
+      endTime: availabilitySlots.endTime,
+      available: availabilitySlots.available,
+    })
+    .from(availabilitySlots)
+    .where(eq(availabilitySlots.caregiverId, caregiver.id));
+
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-1 font-serif text-2xl font-semibold text-gray-900">
@@ -56,6 +68,7 @@ export default async function BookCaregiverPage({
         maxChildren={caregiver.maxChildren}
         hourlyRate={caregiver.hourlyRate}
         dailyRate={caregiver.dailyRate}
+        slots={slots}
       />
     </main>
   );

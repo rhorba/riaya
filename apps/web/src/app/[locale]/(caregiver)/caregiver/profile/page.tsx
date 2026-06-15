@@ -24,6 +24,8 @@ export default async function CaregiverProfilePage() {
                 maxAgeYears: profile.maxAgeYears,
                 maxChildren: profile.maxChildren,
                 hasOwnSpace: profile.hasOwnSpace,
+                cancellationFreeHours: profile.cancellationFreeHours,
+                cancellationFeePercent: profile.cancellationFeePercent,
               }
             : null
         }

@@ -15,8 +15,15 @@ export type CaregiverCardData = {
   reviewCount: number;
 };
 
-/** Caregiver result card. Safety badge is the dominant signal (UX principle #1). */
-export function CaregiverCard({ caregiver }: { caregiver: CaregiverCardData }) {
+/** Caregiver result card. Safety badge is the dominant signal (UX principle #1).
+ * `relevance` (0–1) is shown as a match score when results come from AI search. */
+export function CaregiverCard({
+  caregiver,
+  relevance,
+}: {
+  caregiver: CaregiverCardData;
+  relevance?: number | undefined;
+}) {
   const t = useTranslations("search");
   const tc = useTranslations("careTypes");
   const tp = useTranslations("publicProfile");
@@ -43,7 +50,14 @@ export function CaregiverCard({ caregiver }: { caregiver: CaregiverCardData }) {
         </div>
       </div>
 
-      <VerificationBadge level={caregiver.verificationLevel} size="sm" />
+      <div className="flex items-center gap-2">
+        <VerificationBadge level={caregiver.verificationLevel} size="sm" />
+        {relevance != null && (
+          <span className="rounded-full bg-[var(--color-terracotta-50)] px-2 py-0.5 text-xs font-medium text-[var(--color-terracotta-600)]">
+            {t("matchScore", { percent: Math.round(relevance * 100) })}
+          </span>
+        )}
+      </div>
 
       <div className="flex flex-wrap gap-1.5">
         {caregiver.careTypes.slice(0, 3).map((ct) => (

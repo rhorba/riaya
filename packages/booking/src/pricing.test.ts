@@ -32,4 +32,17 @@ describe("booking pricing", () => {
     // 4000 c/hr * (90/60) = 6000; 4000 * (50/60) = 3333.33 → 3333
     expect(computeBookingAmount({ hourlyRate: 4000 }, 50)).toBe(3333);
   });
+
+  it("caps a daily-rate session at one day even beyond 8h", () => {
+    // 32000 c/day; 12h would pro-rate to 1.5 days but is capped at 1 day.
+    expect(computeBookingAmount({ dailyRate: 32000 }, 12 * 60)).toBe(32000);
+  });
+
+  it("prefers the hourly rate over the daily rate when both are set", () => {
+    expect(computeBookingAmount({ hourlyRate: 4000, dailyRate: 32000 }, 240)).toBe(16000);
+  });
+
+  it("accepts an optional care type without changing the amount (no surcharge in v0.1)", () => {
+    expect(computeBookingAmount({ hourlyRate: 4000 }, 240, "daya")).toBe(16000);
+  });
 });

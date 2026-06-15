@@ -1,6 +1,7 @@
 import { CaregiverCard } from "@/components/caregiver-card";
 import type { CareType, VerificationLevel } from "@riaya/core";
 import { caregiverProfiles, db } from "@riaya/db";
+import { searchCaregivers } from "@riaya/matching";
 import { type SQL, and, count, desc, inArray, lte, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
@@ -51,6 +52,8 @@ export default async function SearchPage({
   const maxRateMad = Number(str(sp.maxHourlyRate));
   const maxHourlyRate = Number.isFinite(maxRateMad) && maxRateMad > 0 ? maxRateMad : undefined;
   const page = Math.max(1, Number(str(sp.page)) || 1);
+  // Free-text query → AI (pgvector) relevance ranking instead of rating order.
+  const query = str(sp.q);
 
   // ── Build WHERE ─────────────────────────────────────────────────────────────
   const conditions: SQL[] = [];
@@ -72,34 +75,65 @@ export default async function SearchPage({
   }
   const where = conditions.length ? and(...conditions) : undefined;
 
-  // ── Query (public read — caregiver_read RLS is USING(true), no auth needed) ──
-  const [results, totalRow] = await Promise.all([
-    db
-      .select({
-        id: caregiverProfiles.id,
-        displayName: caregiverProfiles.displayName,
-        photoUrl: caregiverProfiles.photoUrl,
-        careTypes: caregiverProfiles.careTypes,
-        cities: caregiverProfiles.cities,
-        hourlyRate: caregiverProfiles.hourlyRate,
-        verificationLevel: caregiverProfiles.verificationLevel,
-        avgRating: caregiverProfiles.avgRating,
-        reviewCount: caregiverProfiles.reviewCount,
-      })
-      .from(caregiverProfiles)
-      .where(where)
-      // Verified caregivers first (safety), then highest rated.
-      .orderBy(desc(caregiverProfiles.avgRating), desc(caregiverProfiles.completedBookings))
-      .limit(PAGE_SIZE)
-      .offset((page - 1) * PAGE_SIZE),
-    db.select({ n: count() }).from(caregiverProfiles).where(where),
-  ]);
+  // Columns every result card needs (public read — caregiver_read RLS USING(true)).
+  const cardCols = {
+    id: caregiverProfiles.id,
+    displayName: caregiverProfiles.displayName,
+    photoUrl: caregiverProfiles.photoUrl,
+    careTypes: caregiverProfiles.careTypes,
+    cities: caregiverProfiles.cities,
+    hourlyRate: caregiverProfiles.hourlyRate,
+    verificationLevel: caregiverProfiles.verificationLevel,
+    avgRating: caregiverProfiles.avgRating,
+    reviewCount: caregiverProfiles.reviewCount,
+  };
 
-  const total = totalRow[0]?.n ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  // ── Query ───────────────────────────────────────────────────────────────────
+  // With a free-text query → pgvector relevance ranking (S3-06/07). Otherwise the
+  // structured browse: verified + highest-rated first, paginated.
+  async function loadCards(ids: string[]) {
+    if (ids.length === 0) return [];
+    return db.select(cardCols).from(caregiverProfiles).where(inArray(caregiverProfiles.id, ids));
+  }
+
+  let results: Awaited<ReturnType<typeof loadCards>> = [];
+  let relevanceById = new Map<string, number>();
+  let total = 0;
+  let totalPages = 1;
+
+  if (query) {
+    const matches = await searchCaregivers(db, {
+      careTypes: careType ? [careType] : [],
+      text: [query, city].filter(Boolean).join(" "),
+      where,
+      limit: PAGE_SIZE,
+    });
+    relevanceById = new Map(matches.map((m) => [m.id, m.score]));
+    const cards = await loadCards(matches.map((m) => m.id));
+    const byId = new Map(cards.map((c) => [c.id, c]));
+    // Preserve relevance order (DB IN() does not guarantee order).
+    results = matches.map((m) => byId.get(m.id)).filter((c): c is (typeof cards)[number] => !!c);
+    total = results.length;
+  } else {
+    const [rows, totalRow] = await Promise.all([
+      db
+        .select(cardCols)
+        .from(caregiverProfiles)
+        .where(where)
+        // Verified caregivers first (safety), then highest rated.
+        .orderBy(desc(caregiverProfiles.avgRating), desc(caregiverProfiles.completedBookings))
+        .limit(PAGE_SIZE)
+        .offset((page - 1) * PAGE_SIZE),
+      db.select({ n: count() }).from(caregiverProfiles).where(where),
+    ]);
+    results = rows;
+    total = totalRow[0]?.n ?? 0;
+    totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  }
 
   const buildHref = (overrides: Record<string, string | number | undefined>) => {
     const q = new URLSearchParams();
+    if (query) q.set("q", query);
     if (careType) q.set("careType", careType);
     if (city) q.set("city", city);
     if (maxHourlyRate) q.set("maxHourlyRate", String(maxHourlyRate));
@@ -124,6 +158,16 @@ export default async function SearchPage({
         method="get"
         className="mb-8 grid grid-cols-1 gap-3 rounded-2xl bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-5"
       >
+        <div className="sm:col-span-2 lg:col-span-5">
+          <Field label={t("queryLabel")}>
+            <input
+              name="q"
+              defaultValue={query ?? ""}
+              placeholder={t("queryPlaceholder")}
+              className={SELECT_CLS}
+            />
+          </Field>
+        </div>
         <Field label={t("careType")}>
           <select name="careType" defaultValue={careType ?? ""} className={SELECT_CLS}>
             <option value="">{t("any")}</option>
@@ -185,7 +229,7 @@ export default async function SearchPage({
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {results.map((c) => (
-            <CaregiverCard key={c.id} caregiver={c} />
+            <CaregiverCard key={c.id} caregiver={c} relevance={relevanceById.get(c.id)} />
           ))}
         </div>
       )}

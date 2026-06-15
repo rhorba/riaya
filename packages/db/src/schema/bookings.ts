@@ -40,6 +40,9 @@ export const bookings = pgTable(
     // moment the second timestamp lands.
     familyEndedAt: timestamp("family_ended_at", { withTimezone: true }),
     caregiverEndedAt: timestamp("caregiver_ended_at", { withTimezone: true }),
+    // Set by the pg-boss reminder sweep once a 1h-before reminder has been sent —
+    // makes the sweep idempotent (a booking is reminded at most once).
+    reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },

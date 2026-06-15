@@ -1,6 +1,37 @@
 # sessions
 <!-- append-only log — session start/end snapshots -->
 
+## SESSION_END — 2026-06-15 — SPRINT 3 COMPLETE ✅
+
+Sprint: 3 — DONE (availability calendar + slot-aware booking + cancellation policy + pgvector AI matching + 1h reminder job). Awaiting Sprint 4 approval.
+
+**Found Sprint 3 work uncommitted + unlogged in the working tree** (prior session ended at "Sprint 2 complete"). Assessed, fixed, verified, and committed it this session.
+
+Completed / verified this session (S3-01..S3-11):
+- **@riaya/booking**: `slots.ts` (PURE slot logic — `slotsForDate`/`windowCovered`/`openRangesForDate`/`slotsOverlap`), `cancellation.ts` (`computeCancellationFee`, 24h/50% default). Barrel + `./slots`/`./pricing` subpaths.
+- **@riaya/matching**: `embedding.ts` (deterministic 384-dim feature-hashing, FNV-1a, FR+AR token-safe), `search.ts` (pgvector cosine `searchCaregivers` → `{id,score}`), `backfill.ts` (`db:embed`).
+- **Caregiver availability route** `/caregiver/availability` (weekly grid + date-override editor + actions). Family booking form shows open ranges via `@riaya/booking/slots`.
+- **Search page**: free-text `?q=` → pgvector relevance ranking; empty `q` → Sprint 2 structured browse (no regression). Structured filters AND into the vector query.
+- **Cancellation policy** wired: caregiver sets `cancellationFreeHours`/`cancellationFeePercent` in profile; family cancel computes fee (charge deferred to Sprint 4).
+- **Reminder job** `apps/worker/src/reminders.ts` (`sendBookingReminders`, authDb, PII-free, idempotent via `reminder_sent_at`); worker schedules `*/5 * * * *`.
+- **Migration 0005** (`0005_sprint3_availability`): `caregiver_profiles.cancellation_free_hours`/`cancellation_fee_percent` + `bookings.reminder_sent_at`. Journal idx 5.
+- **i18n** fr/ar/en: `availability` namespace + cancellation keys; top-level parity verified.
+- Snapshot: `.claude/.logs/sprint-3-snapshot.md`.
+
+FIXES this session (the in-tree work was ~95% done):
+- Fixed 3 biome errors in `embedding.ts` (regex literals + justified `noMisleadingCharacterClass` ignore — the original `new RegExp` workaround did NOT satisfy biome).
+- Added root `db:embed` + `db:setup` (`migrate && seed && embed`) — fresh seed without embed left free-text search empty (DoD gap closed).
+
+VERIFIED: `pnpm lint` (118 files) clean; `pnpm -r typecheck` (9 projects) clean; `pnpm test` **78/78** (was 43); `pnpm --filter @riaya/web build` (webpack) passes; fresh `down -v` → migrate (0000–0005) + RLS + seed (8/4/2) + `db:embed` (8 vectors) clean.
+
+KEY DECISIONS: see snapshot. Headlines: embeddings are deterministic feature-hashing (real model = v0.2 behind same interface); vector search opt-in via `?q=`; `db:embed` is a mandatory post-seed step (no db↔matching package cycle); reminder body is FR-only (notification rows carry no locale — v0.1 accepted).
+
+RESUME INSTRUCTIONS:
+1. Invoke orchestrator. SPRINT BOUNDARY — Sprint 3 done + committed. Get Sprint 4 approval.
+2. Sprint 4 = Payments & Escrow + Employer subsidy (`packages/payments`): `computeEscrowAmounts`, escrow state machine, `PaymentGateway`/`DevGateway`, authorize-on-confirm / capture-on-start / release-after-reviews-or-24h / refund-on-cancel, employer subsidy deduction + monthly invoice sweep, caregiver earnings + employer invoice pages. Cancellation fee (computed in S3) gets charged here.
+3. Local run: `docker compose up -d postgres` (5439); export `DATABASE_URL`(riaya_app)+`DATABASE_URL_ADMIN`(riaya:riaya); `pnpm db:setup` (migrate→seed→embed); `pnpm dev`. `rls.sql` non-idempotent → `down -v` to re-migrate a dirty DB.
+4. Carry-forward: reminder body FR-only; `db:embed` mandatory after seed; no 0004/0005 drizzle snapshot quirks; cancellation fee not yet charged.
+
 ## SESSION_END — 2026-06-14 (c) — SPRINT 2 COMPLETE ✅
 
 Sprint: 2 — DONE (public caregiver search + full booking lifecycle). Built on the `sprint-1` branch per user decision ("just push sprint 1 and go for sprint 2"). Awaiting Sprint 3 approval.

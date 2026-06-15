@@ -68,6 +68,9 @@ export const CaregiverProfileCreateSchema = z.object({
   maxAgeYears: z.number().int().min(0).max(18).optional(),
   maxChildren: z.number().int().min(1).max(10).default(1),
   hasOwnSpace: z.boolean().default(false),
+  // Cancellation policy: free if cancelled ≥ N hours before; else feePercent of gross.
+  cancellationFreeHours: z.number().int().min(0).max(168).default(24),
+  cancellationFeePercent: z.number().int().min(0).max(100).default(50),
 });
 
 export const CaregiverProfileUpdateSchema = CaregiverProfileCreateSchema.partial();
@@ -127,6 +130,40 @@ export const BookingRequestSchema = z
 
 export const BookingDeclineSchema = z.object({
   cancelReason: z.string().min(1).max(500),
+});
+
+// ── Availability ─────────────────────────────────────────────────────────────
+
+/** "HH:MM" 24-hour clock time. */
+export const TimeStringSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "time must be HH:MM");
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * One availability slot. Exactly one of `dayOfWeek` (recurring weekly) or
+ * `specificDate` (a date override) must be set. `available: false` on an override
+ * blocks that date.
+ */
+export const AvailabilitySlotSchema = z
+  .object({
+    dayOfWeek: z.number().int().min(0).max(6).nullable().default(null),
+    specificDate: z.string().regex(ISO_DATE_RE).nullable().default(null),
+    startTime: TimeStringSchema,
+    endTime: TimeStringSchema,
+    available: z.boolean().default(true),
+  })
+  .refine((s) => s.endTime > s.startTime, {
+    message: "endTime must be after startTime",
+    path: ["endTime"],
+  })
+  .refine((s) => (s.dayOfWeek == null) !== (s.specificDate == null), {
+    message: "exactly one of dayOfWeek or specificDate must be set",
+    path: ["dayOfWeek"],
+  });
+
+/** Full replacement of a caregiver's availability calendar. */
+export const AvailabilitySaveSchema = z.object({
+  slots: z.array(AvailabilitySlotSchema).max(100),
 });
 
 // ── Search ───────────────────────────────────────────────────────────────────
