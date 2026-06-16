@@ -1,4 +1,6 @@
 import PgBoss from "pg-boss";
+import { sweepEmployerInvoices } from "./employer-invoices.js";
+import { sweepEscrowReleases } from "./escrow-sweep.js";
 import { sendBookingReminders } from "./reminders.js";
 
 /**
@@ -6,9 +8,9 @@ import { sendBookingReminders } from "./reminders.js";
  *
  * Queue handlers:
  *   - booking.reminders  → Sprint 3 (remind family + caregiver ≤1h before) ✅
- *   - escrow.sweep       → Sprint 4   (release escrow after dispute window)
- *   - email.digest       → Sprint 5   (Resend digests)
- *   - employer.invoice   → Sprint 4/5 (monthly employer invoices)
+ *   - escrow.sweep       → Sprint 4 (release captured escrow after 24h window) ✅
+ *   - email.digest       → Sprint 5 (Resend digests)
+ *   - employer.invoice   → Sprint 4 (monthly employer subsidy invoices) ✅
  */
 const QUEUES = {
   bookingReminders: "booking.reminders",
@@ -36,13 +38,15 @@ async function main(): Promise<void> {
     console.log(`[booking.reminders] job ${job?.id} — reminded ${sent} booking(s)`);
   });
   await boss.work(QUEUES.escrowSweep, async ([job]) => {
-    console.log("[escrow.sweep] stub — job", job?.id);
+    const released = await sweepEscrowReleases();
+    console.log(`[escrow.sweep] job ${job?.id} — released ${released} escrow(s)`);
   });
   await boss.work(QUEUES.emailDigest, async ([job]) => {
     console.log("[email.digest] stub — job", job?.id);
   });
   await boss.work(QUEUES.employerInvoice, async ([job]) => {
-    console.log("[employer.invoice] stub — job", job?.id);
+    const invoices = await sweepEmployerInvoices();
+    console.log(`[employer.invoice] job ${job?.id} — issued ${invoices} invoice(s)`);
   });
 
   // Periodic sweeps (UTC cron). Cadence tuned in later sprints.

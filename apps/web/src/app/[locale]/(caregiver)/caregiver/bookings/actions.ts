@@ -3,6 +3,7 @@
 import { type ActionResult, fail, ok } from "@/lib/action-result";
 import { auditBooking, confirmSessionEnd } from "@/lib/booking-shared";
 import { withRoleTx } from "@/lib/db";
+import { authorizeEscrowForBooking, openDisputeWindowForBooking } from "@/lib/escrow-service";
 import { assertTransition, checkAvailability } from "@riaya/booking";
 import { BookingDeclineSchema } from "@riaya/core";
 import { type Tx, bookings, caregiverProfiles } from "@riaya/db";
@@ -37,10 +38,16 @@ export const getCaregiverBookings = withRoleTx(
   }
 );
 
-/** Caregiver accepts a requested booking → confirmed. */
-export const acceptBooking = withRoleTx(
+/**
+ * Caregiver accepts a requested booking → confirmed, then the payment is
+ * pre-authorized and the escrow created (authorize-on-confirm). The booking
+ * transition runs under the caregiver's RLS context; the escrow side-effect runs
+ * as a system step afterwards (escrows are system-only), keyed on the booking id
+ * so it is idempotent.
+ */
+const acceptBookingTx = withRoleTx(
   ["caregiver"],
-  async (tx, user, bookingId: string): Promise<ActionResult> => {
+  async (tx, user, bookingId: string): Promise<ActionResult<{ actorId: string }>> => {
     const [booking] = await tx.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
     if (!booking) return fail("bookingNotFound");
     if (booking.status !== "requested") return fail("invalidState");
@@ -71,10 +78,17 @@ export const acceptBooking = withRoleTx(
       { status: "confirmed" }
     );
 
-    revalidatePath("/caregiver/bookings");
-    return ok(undefined);
+    return ok({ actorId: user.id });
   }
 );
+
+export async function acceptBooking(bookingId: string): Promise<ActionResult> {
+  const res = await acceptBookingTx(bookingId);
+  if (!res.ok) return res;
+  await authorizeEscrowForBooking(res.data.actorId, bookingId);
+  revalidatePath("/caregiver/bookings");
+  return ok(undefined);
+}
 
 /** Caregiver declines a requested booking → cancelled (with reason). */
 export const declineBooking = withRoleTx(
@@ -107,11 +121,23 @@ export const declineBooking = withRoleTx(
 );
 
 /** Caregiver confirms the session ended (completes when the family also confirms). */
-export const caregiverConfirmEnd = withRoleTx(
+const caregiverConfirmEndTx = withRoleTx(
   ["caregiver"],
-  async (tx, user, bookingId: string): Promise<ActionResult> => {
+  async (
+    tx,
+    user,
+    bookingId: string
+  ): Promise<ActionResult<{ completed: boolean; actorId: string }>> => {
     const result = await confirmSessionEnd(tx, user, bookingId, "caregiver");
-    revalidatePath("/caregiver/bookings");
-    return result;
+    if (!result.ok) return result;
+    return ok({ completed: result.data.completed, actorId: user.id });
   }
 );
+
+export async function caregiverConfirmEnd(bookingId: string): Promise<ActionResult> {
+  const res = await caregiverConfirmEndTx(bookingId);
+  if (!res.ok) return res;
+  if (res.data.completed) await openDisputeWindowForBooking(res.data.actorId, bookingId);
+  revalidatePath("/caregiver/bookings");
+  return ok(undefined);
+}

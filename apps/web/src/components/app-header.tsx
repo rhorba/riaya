@@ -51,7 +51,21 @@ export async function AppHeader() {
                   >
                     {t("availability")}
                   </Link>
+                  <Link
+                    href="/caregiver/earnings"
+                    className="text-gray-600 hover:text-[var(--color-terracotta-600)]"
+                  >
+                    {t("earnings")}
+                  </Link>
                 </>
+              )}
+              {user.role === "employer" && (
+                <Link
+                  href="/employer/invoices"
+                  className="text-gray-600 hover:text-[var(--color-terracotta-600)]"
+                >
+                  {t("invoices")}
+                </Link>
               )}
               <span className="rounded-full bg-[var(--color-sage-50)] px-3 py-1 text-xs font-medium text-[var(--color-sage-600)]">
                 {t(`roles.${user.role}`)}

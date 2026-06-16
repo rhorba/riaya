@@ -1,6 +1,32 @@
 # sessions
 <!-- append-only log — session start/end snapshots -->
 
+## SESSION_END — 2026-06-16 — SPRINT 4 COMPLETE ✅
+
+Sprint: 4 — DONE (Payments & Escrow + Employer subsidy). Awaiting Sprint 5 approval. NOT yet committed (local only).
+
+Built Module E end-to-end. Full detail in `.claude/.logs/sprint-4-snapshot.md`.
+
+**DECISION (user-chosen): fee model = fee-on-top (marketplace standard).** Family pays gross + 12%; caregiver receives gross − 8%; platform keeps 20%; books balance. Supersedes the literal reading of `.claude` non-negotiable #5 (the family cap now applies to `familyGross`, not bare gross). The spec was self-contradictory; asked the user, who picked fee-on-top.
+
+Completed this session (S4):
+- **@riaya/payments** (NEW, pure, @riaya/core only): `amounts.ts` (`computeEscrowAmounts`/`capSubsidy`), `state-machine.ts` (escrow transitions), `gateway.ts` (`PaymentGateway` + `DevGateway`). Subpaths `.`/`./amounts`/`./state-machine`/`./gateway` (all client-safe — no DB dep).
+- **Escrow lifecycle** (`apps/web/src/lib/escrow-service.ts`): authorize-on-confirm, capture-on-start, 24h dispute window on completion, refund-on-cancel (fee captured as caregiver compensation). Runs under `withSystem` = `withUserContext(db, actorId, "admin", …)` so system-only escrow RLS passes while audit attributes to the real actor; escrow mutation + AuditLog atomic. Booking actions split into `*Tx` (RLS-scoped transition) + thin wrapper calling the escrow service after. Idempotent (keyed on bookingId).
+- **Employer subsidy**: `requestBooking` tags `employerAccountId` for active enrolled employees; `resolveSubsidy` = min(remaining monthly benefit, familyGross); deducts `employer.totalBudgetUsed`.
+- **Worker**: `escrow-sweep.ts` (release captured past window → payout, idempotent guarded update) `*/15`; `employer-invoices.ts` (monthly prior-month subsidy invoice, idempotent unique period) `0 2 1 * *`.
+- **Migration 0006** (`0006_sprint4_payments`, journal idx 6): `escrows.cancellation_fee` + new `employer_invoices` table + unique period index. rls.sql: employer_invoices (owner read, system write).
+- **UI**: family tracker payment summary; `/caregiver/earnings`; `/employer/invoices`; nav links. **i18n** fr/ar/en (`earnings`, `invoices`, `booking.escrowStatus.*`).
+- **Seed**: `seedBookings` (idempotent) — 6 bookings Sara↔Fatima across statuses incl. employer-subsidized + disputed + escrows.
+- Snapshot: `.claude/.logs/sprint-4-snapshot.md`.
+
+VERIFIED: `pnpm lint` (131 files) clean; `pnpm -r typecheck` clean; `pnpm test` **98/98** (was 78; +15 payments pure, +5 live escrow-rls); `pnpm --filter @riaya/web build` (webpack) passes (new earnings/invoices routes); fresh `down -v` → migrate (0000–0006) + RLS + seed (8/4/2 + 6 bookings/escrows) + `db:embed` (8) clean.
+
+RESUME INSTRUCTIONS:
+1. Invoke orchestrator. SPRINT BOUNDARY — Sprint 4 done, local only. Commit + push to `main` (single-branch). Get Sprint 5 approval.
+2. Sprint 5 = Verification system (doc upload + admin queue) + Reviews + Notifications + Email (Resend). Reviews feed the escrow release "both reviews OR 24h" branch (currently 24h-only); dispute raising (captured→disputed, escrow already supports it) + admin resolution land here/Sprint 6.
+3. Local run: `docker compose up -d postgres` (5439); export `DATABASE_URL`(riaya_app)+`DATABASE_URL_ADMIN`(riaya:riaya); `pnpm db:setup` (migrate→seed→embed); `pnpm dev`. rls.sql non-idempotent → `down -v` to re-migrate a dirty DB. Build/test/seed need both env vars exported.
+4. Carry-forward: booking↔escrow are separate txs (DevGateway reliable; prod needs reconciliation sweep); release is 24h-timeout-only until reviews exist; demo seed = 6 bookings (DoD §8 says 10); `db:embed` mandatory after seed.
+
 ## SESSION_END — 2026-06-15 — SPRINT 3 COMPLETE ✅
 
 Sprint: 3 — DONE (availability calendar + slot-aware booking + cancellation policy + pgvector AI matching + 1h reminder job). Awaiting Sprint 4 approval.

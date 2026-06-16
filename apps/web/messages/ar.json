@@ -38,7 +38,9 @@
       "caregiver": "مربية",
       "employer": "صاحب عمل",
       "admin": "مشرف"
-    }
+    },
+    "earnings": "الأرباح",
+    "invoices": "الفواتير"
   },
   "common": {
     "save": "حفظ",
@@ -222,7 +224,18 @@
     "startSession": "بدء الجلسة",
     "confirmEnd": "تأكيد انتهاء الجلسة",
     "waitingCaregiverEnd": "في انتظار تأكيد المربية",
-    "waitingFamilyEnd": "في انتظار تأكيد الأسرة"
+    "waitingFamilyEnd": "في انتظار تأكيد الأسرة",
+    "youPay": "تدفعين",
+    "employerCovers": "يتكفل بها صاحب العمل",
+    "cancellationFeeCharged": "رسوم الإلغاء",
+    "escrowStatus": {
+      "pending": "قيد الانتظار",
+      "authorized": "تم الحجز المسبق للدفع",
+      "captured": "تم سحب المبلغ",
+      "released": "تم الدفع للمربية",
+      "refunded": "تم الاسترجاع",
+      "disputed": "نزاع"
+    }
   },
   "availability": {
     "title": "أوقات توفّري",
@@ -268,5 +281,25 @@
     "bookingNotFound": "الحجز غير موجود.",
     "invalidState": "هذا الإجراء غير ممكن في الحالة الحالية للحجز.",
     "createFailed": "فشلت العملية. يرجى المحاولة مرة أخرى."
+  },
+  "earnings": {
+    "title": "أرباحي",
+    "paidOut": "مدفوع",
+    "upcoming": "قادم",
+    "compensation": "تعويضات",
+    "none": "لا توجد أرباح بعد."
+  },
+  "invoices": {
+    "title": "الفواتير",
+    "monthlyPool": "الميزانية الشهرية",
+    "totalDisbursed": "الإجمالي المدفوع",
+    "forNEmployees": "{count} موظف",
+    "monthlyInvoices": "الفواتير الشهرية",
+    "none": "لا توجد فواتير بعد.",
+    "bookingsCount": "{count} حجز",
+    "status": {
+      "issued": "صادرة",
+      "paid": "مدفوعة"
+    }
   }
 }

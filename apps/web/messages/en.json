@@ -38,7 +38,9 @@
       "caregiver": "Caregiver",
       "employer": "Employer",
       "admin": "Admin"
-    }
+    },
+    "earnings": "Earnings",
+    "invoices": "Invoices"
   },
   "common": {
     "save": "Save",
@@ -222,7 +224,18 @@
     "startSession": "Start session",
     "confirmEnd": "Confirm session end",
     "waitingCaregiverEnd": "Waiting for the caregiver to confirm",
-    "waitingFamilyEnd": "Waiting for the family to confirm"
+    "waitingFamilyEnd": "Waiting for the family to confirm",
+    "youPay": "You pay",
+    "employerCovers": "Covered by employer",
+    "cancellationFeeCharged": "Cancellation fee",
+    "escrowStatus": {
+      "pending": "Pending",
+      "authorized": "Payment pre-authorized",
+      "captured": "Payment captured",
+      "released": "Paid out to caregiver",
+      "refunded": "Refunded",
+      "disputed": "In dispute"
+    }
   },
   "availability": {
     "title": "My availability",
@@ -268,5 +281,25 @@
     "bookingNotFound": "Booking not found.",
     "invalidState": "This action is not possible for the booking's current state.",
     "createFailed": "The operation failed. Please try again."
+  },
+  "earnings": {
+    "title": "My earnings",
+    "paidOut": "Paid out",
+    "upcoming": "Upcoming",
+    "compensation": "Compensation",
+    "none": "No earnings yet."
+  },
+  "invoices": {
+    "title": "Invoices",
+    "monthlyPool": "Monthly budget",
+    "totalDisbursed": "Total disbursed",
+    "forNEmployees": "{count} employee(s)",
+    "monthlyInvoices": "Monthly invoices",
+    "none": "No invoices yet.",
+    "bookingsCount": "{count} booking(s)",
+    "status": {
+      "issued": "Issued",
+      "paid": "Paid"
+    }
   }
 }

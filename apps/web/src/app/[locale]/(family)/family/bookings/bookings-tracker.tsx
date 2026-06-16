@@ -1,6 +1,7 @@
 "use client";
 
 import { BookingStatusBadge } from "@/components/booking-status-badge";
+import { formatMoney, money } from "@riaya/core";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -74,6 +75,8 @@ function Row({
         <BookingStatusBadge status={booking.status} />
       </div>
 
+      {booking.escrow && <PaymentSummary escrow={booking.escrow} t={t} />}
+
       {error && (
         <p role="alert" className="mt-2 rounded-lg bg-red-50 px-3 py-1.5 text-sm text-red-700">
           {tErr(error)}
@@ -101,6 +104,36 @@ function Row({
         )}
       </div>
     </li>
+  );
+}
+
+function PaymentSummary({
+  escrow,
+  t,
+}: {
+  escrow: NonNullable<FamilyBooking["escrow"]>;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <div className="mt-3 rounded-xl bg-[var(--color-cream-100,#faf6f0)] px-3 py-2 text-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-gray-600">{t("youPay")}</span>
+        <span className="font-semibold text-gray-900">{formatMoney(money(escrow.familyPays))}</span>
+      </div>
+      {escrow.employerSubsidy > 0 && (
+        <div className="mt-0.5 flex items-center justify-between text-[var(--color-sage-700,#4b7058)]">
+          <span>{t("employerCovers")}</span>
+          <span>−{formatMoney(money(escrow.employerSubsidy))}</span>
+        </div>
+      )}
+      {escrow.cancellationFee > 0 && (
+        <div className="mt-0.5 flex items-center justify-between text-red-600">
+          <span>{t("cancellationFeeCharged")}</span>
+          <span>{formatMoney(money(escrow.cancellationFee))}</span>
+        </div>
+      )}
+      <p className="mt-1 text-xs text-gray-400">{t(`escrowStatus.${escrow.status}`)}</p>
+    </div>
   );
 }
 

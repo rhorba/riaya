@@ -38,7 +38,9 @@
       "caregiver": "Assistante",
       "employer": "Employeur",
       "admin": "Admin"
-    }
+    },
+    "earnings": "Revenus",
+    "invoices": "Factures"
   },
   "common": {
     "save": "Enregistrer",
@@ -222,7 +224,18 @@
     "startSession": "Démarrer la session",
     "confirmEnd": "Confirmer la fin de session",
     "waitingCaregiverEnd": "En attente de la confirmation de l'assistante",
-    "waitingFamilyEnd": "En attente de la confirmation de la famille"
+    "waitingFamilyEnd": "En attente de la confirmation de la famille",
+    "youPay": "Vous payez",
+    "employerCovers": "Pris en charge par l’employeur",
+    "cancellationFeeCharged": "Frais d’annulation",
+    "escrowStatus": {
+      "pending": "En attente",
+      "authorized": "Paiement pré-autorisé",
+      "captured": "Paiement débité",
+      "released": "Versé à l’assistante",
+      "refunded": "Remboursé",
+      "disputed": "En litige"
+    }
   },
   "availability": {
     "title": "Mes disponibilités",
@@ -268,5 +281,25 @@
     "bookingNotFound": "Réservation introuvable.",
     "invalidState": "Cette action n'est pas possible pour l'état actuel de la réservation.",
     "createFailed": "L'opération a échoué. Veuillez réessayer."
+  },
+  "earnings": {
+    "title": "Mes revenus",
+    "paidOut": "Versé",
+    "upcoming": "À venir",
+    "compensation": "Indemnités",
+    "none": "Aucun revenu pour le moment."
+  },
+  "invoices": {
+    "title": "Factures",
+    "monthlyPool": "Budget mensuel",
+    "totalDisbursed": "Total versé",
+    "forNEmployees": "{count} employé(s)",
+    "monthlyInvoices": "Factures mensuelles",
+    "none": "Aucune facture pour le moment.",
+    "bookingsCount": "{count} réservation(s)",
+    "status": {
+      "issued": "Émise",
+      "paid": "Payée"
+    }
   }
 }

@@ -83,6 +83,10 @@ export const escrows = pgTable(
       mode: "number",
     }).notNull(),
     caregiverPayout: bigint("caregiver_payout", { mode: "number" }).notNull(),
+    // Cancellation fee actually charged on a late cancel (0 otherwise). Charged
+    // to the family and paid to the caregiver as compensation; recorded here so
+    // the earnings/refund breakdown is auditable.
+    cancellationFee: bigint("cancellation_fee", { mode: "number" }).default(0).notNull(),
     status: escrowStatusEnum("status").default("pending").notNull(),
     gatewayRef: text("gateway_ref"),
     authorizedAt: timestamp("authorized_at", { withTimezone: true }),

@@ -4,6 +4,11 @@ import { type ActionResult, fail, ok } from "@/lib/action-result";
 import { auditBooking, confirmSessionEnd } from "@/lib/booking-shared";
 import { withRoleTx } from "@/lib/db";
 import {
+  captureEscrowForBooking,
+  openDisputeWindowForBooking,
+  refundEscrowForBooking,
+} from "@/lib/escrow-service";
+import {
   assertTransition,
   checkAvailability,
   computeBookingAmount,
@@ -11,15 +16,24 @@ import {
   durationMinutes,
   hoursUntil,
 } from "@riaya/booking";
-import { BookingRequestSchema } from "@riaya/core";
-import { bookings, caregiverProfiles, familyProfiles } from "@riaya/db";
-import { desc, eq } from "drizzle-orm";
+import { BookingRequestSchema, money } from "@riaya/core";
+import { bookings, caregiverProfiles, enrolledEmployees, escrows, familyProfiles } from "@riaya/db";
+import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-/** A booking row enriched with the caregiver's public display name, for the tracker. */
-export type FamilyBooking = typeof bookings.$inferSelect & { caregiverName: string };
+/** A booking row enriched with the caregiver's name + this booking's escrow. */
+export type FamilyBooking = typeof bookings.$inferSelect & {
+  caregiverName: string;
+  /** Payment summary from the escrow (null until the caregiver confirms). */
+  escrow: {
+    status: (typeof escrows.$inferSelect)["status"];
+    familyPays: number;
+    employerSubsidy: number;
+    cancellationFee: number;
+  } | null;
+};
 
-/** List the signed-in family's bookings (newest first) with caregiver names. */
+/** List the signed-in family's bookings (newest first) with caregiver + escrow. */
 export const getMyBookings = withRoleTx(["family"], async (tx, user): Promise<FamilyBooking[]> => {
   const [profile] = await tx
     .select({ id: familyProfiles.id })
@@ -29,13 +43,33 @@ export const getMyBookings = withRoleTx(["family"], async (tx, user): Promise<Fa
   if (!profile) return [];
 
   const rows = await tx
-    .select({ booking: bookings, caregiverName: caregiverProfiles.displayName })
+    .select({
+      booking: bookings,
+      caregiverName: caregiverProfiles.displayName,
+      escrowStatus: escrows.status,
+      familyPays: escrows.familyPays,
+      employerSubsidy: escrows.employerSubsidy,
+      cancellationFee: escrows.cancellationFee,
+    })
     .from(bookings)
     .innerJoin(caregiverProfiles, eq(bookings.caregiverId, caregiverProfiles.id))
+    .leftJoin(escrows, eq(escrows.bookingId, bookings.id))
     .where(eq(bookings.familyId, profile.id))
     .orderBy(desc(bookings.createdAt));
 
-  return rows.map((r) => ({ ...r.booking, caregiverName: r.caregiverName }));
+  return rows.map((r) => ({
+    ...r.booking,
+    caregiverName: r.caregiverName,
+    escrow:
+      r.escrowStatus == null
+        ? null
+        : {
+            status: r.escrowStatus,
+            familyPays: r.familyPays ?? 0,
+            employerSubsidy: r.employerSubsidy ?? 0,
+            cancellationFee: r.cancellationFee ?? 0,
+          },
+  }));
 });
 
 /**
@@ -75,11 +109,21 @@ export const requestBooking = withRoleTx(
       return fail(availability.reason === "in_past" ? "startInPast" : "slotUnavailable");
     }
 
+    // If this family's user is an active enrolled employee, tag the booking with
+    // their employer so the escrow can apply the subsidy at confirm time. RLS lets
+    // a family read their own enrollment row (enrolled.user_id = app_user()).
+    const [enrollment] = await tx
+      .select({ employerAccountId: enrolledEmployees.employerAccountId })
+      .from(enrolledEmployees)
+      .where(and(eq(enrolledEmployees.userId, user.id), eq(enrolledEmployees.active, true)))
+      .limit(1);
+
     const [created] = await tx
       .insert(bookings)
       .values({
         caregiverId: caregiver.id,
         familyId: profile.id,
+        employerAccountId: enrollment?.employerAccountId ?? null,
         careType: data.careType,
         startTime: data.startTime,
         endTime: data.endTime,
@@ -99,10 +143,10 @@ export const requestBooking = withRoleTx(
   }
 );
 
-/** Family marks a confirmed session as started → in_progress. */
-export const startSession = withRoleTx(
+/** Family marks a confirmed session as started → in_progress; captures the escrow. */
+const startSessionTx = withRoleTx(
   ["family"],
-  async (tx, user, bookingId: string): Promise<ActionResult> => {
+  async (tx, user, bookingId: string): Promise<ActionResult<{ actorId: string }>> => {
     const [booking] = await tx.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
     if (!booking) return fail("bookingNotFound");
     if (booking.status !== "confirmed") return fail("invalidState");
@@ -121,37 +165,62 @@ export const startSession = withRoleTx(
       { status: "in_progress" }
     );
 
-    revalidatePath("/family/bookings");
-    return ok(undefined);
+    return ok({ actorId: user.id });
   }
 );
 
+export async function startSession(bookingId: string): Promise<ActionResult> {
+  const res = await startSessionTx(bookingId);
+  if (!res.ok) return res;
+  await captureEscrowForBooking(res.data.actorId, bookingId);
+  revalidatePath("/family/bookings");
+  return ok(undefined);
+}
+
 /** Family confirms the session ended (completes when the caregiver also confirms). */
-export const familyConfirmEnd = withRoleTx(
+const familyConfirmEndTx = withRoleTx(
   ["family"],
-  async (tx, user, bookingId: string): Promise<ActionResult> => {
+  async (
+    tx,
+    user,
+    bookingId: string
+  ): Promise<ActionResult<{ completed: boolean; actorId: string }>> => {
     const result = await confirmSessionEnd(tx, user, bookingId, "family");
-    revalidatePath("/family/bookings");
-    return result;
+    if (!result.ok) return result;
+    return ok({ completed: result.data.completed, actorId: user.id });
   }
 );
+
+export async function familyConfirmEnd(bookingId: string): Promise<ActionResult> {
+  const res = await familyConfirmEndTx(bookingId);
+  if (!res.ok) return res;
+  if (res.data.completed) await openDisputeWindowForBooking(res.data.actorId, bookingId);
+  revalidatePath("/family/bookings");
+  return ok(undefined);
+}
 
 /**
  * Family cancels a requested or confirmed booking. Cancelling a still-`requested`
  * booking is always free. Cancelling a `confirmed` booking applies the caregiver's
  * cancellation policy: free if outside the policy window, otherwise a fee (% of
- * the estimated gross). The fee is computed and recorded on the audit trail here;
- * actual money movement (escrow capture/refund) lands in Sprint 4.
+ * the estimated gross). The fee is computed here; the escrow is then unwound
+ * (fee captured as caregiver compensation, remainder refunded to the family).
  */
-export const cancelBooking = withRoleTx(
+const cancelBookingTx = withRoleTx(
   ["family"],
-  async (tx, user, bookingId: string, reason: string): Promise<ActionResult<{ fee: number }>> => {
+  async (
+    tx,
+    user,
+    bookingId: string,
+    reason: string
+  ): Promise<ActionResult<{ fee: number; wasConfirmed: boolean; actorId: string }>> => {
     const [booking] = await tx.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
     if (!booking) return fail("bookingNotFound");
     if (booking.status !== "requested" && booking.status !== "confirmed") {
       return fail("invalidState");
     }
     assertTransition(booking.status, "cancelled");
+    const wasConfirmed = booking.status === "confirmed";
 
     let fee = 0;
     if (booking.status === "confirmed") {
@@ -196,7 +265,21 @@ export const cancelBooking = withRoleTx(
       { status: "cancelled", cancellationFee: fee }
     );
 
-    revalidatePath("/family/bookings");
-    return ok({ fee });
+    return ok({ fee, wasConfirmed, actorId: user.id });
   }
 );
+
+export async function cancelBooking(
+  bookingId: string,
+  reason: string
+): Promise<ActionResult<{ fee: number }>> {
+  const res = await cancelBookingTx(bookingId, reason);
+  if (!res.ok) return res;
+  // Only a confirmed booking has an authorized escrow to unwind; a still-requested
+  // cancel is free and escrow-less.
+  if (res.data.wasConfirmed) {
+    await refundEscrowForBooking(res.data.actorId, bookingId, money(res.data.fee));
+  }
+  revalidatePath("/family/bookings");
+  return ok({ fee: res.data.fee });
+}

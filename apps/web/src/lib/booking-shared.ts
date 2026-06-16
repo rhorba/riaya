@@ -38,7 +38,7 @@ export async function confirmSessionEnd(
   user: SessionUser,
   bookingId: string,
   side: "family" | "caregiver"
-): Promise<ActionResult> {
+): Promise<ActionResult<{ completed: boolean }>> {
   const [booking] = await tx.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
   if (!booking) return fail("bookingNotFound");
   if (booking.status !== "in_progress") return fail("invalidState");
@@ -66,5 +66,5 @@ export async function confirmSessionEnd(
     { status: nextStatus, endConfirmedBy: side }
   );
 
-  return ok(undefined);
+  return ok({ completed: bothConfirmed });
 }

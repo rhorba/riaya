@@ -3,9 +3,11 @@ import { eq } from "drizzle-orm";
 import { authDb } from "./client.js";
 import {
   availabilitySlots,
+  bookings,
   caregiverProfiles,
   employerAccounts,
   enrolledEmployees,
+  escrows,
   familyProfiles,
   users,
 } from "./schema/index.js";
@@ -357,6 +359,177 @@ async function upsertUser(s: Seedling, passwordHash: string): Promise<string> {
   return row.id;
 }
 
+// ── Demo bookings + escrows (Sprint 4) ────────────────────────────────────────
+// Idempotent: only seeded when no bookings exist. All between Sara (family) and
+// Fatima (certified daya, 40 MAD/h). Fee model: family +12% on top, caregiver −8%.
+const round = (n: number) => Math.round(n);
+function escrowAmounts(gross: number, subsidy: number) {
+  const platformFeeFromFamily = round(gross * 0.12);
+  const platformFeeFromCaregiver = round(gross * 0.08);
+  const familyGross = gross + platformFeeFromFamily;
+  return {
+    grossAmount: gross,
+    employerSubsidy: subsidy,
+    familyPays: Math.max(0, familyGross - subsidy),
+    platformFeeFromFamily,
+    platformFeeFromCaregiver,
+    caregiverPayout: gross - platformFeeFromCaregiver,
+  };
+}
+
+async function seedBookings() {
+  const existing = await authDb.select({ id: bookings.id }).from(bookings).limit(1);
+  if (existing.length > 0) {
+    console.log("  ✓ bookings (already seeded — skipped)");
+    return;
+  }
+
+  const userIdFor = async (email: string): Promise<string | null> => {
+    const [u] = await authDb
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    return u?.id ?? null;
+  };
+
+  const saraUserId = await userIdFor("sara@demo.riaya.ma");
+  const fatimaUserId = await userIdFor("fatima@demo.riaya.ma");
+  const atlasUserId = await userIdFor("drh@demo-corp.riaya.ma");
+
+  const [family] = saraUserId
+    ? await authDb
+        .select({ id: familyProfiles.id })
+        .from(familyProfiles)
+        .where(eq(familyProfiles.userId, saraUserId))
+        .limit(1)
+    : [];
+  const [caregiver] = fatimaUserId
+    ? await authDb
+        .select({ id: caregiverProfiles.id })
+        .from(caregiverProfiles)
+        .where(eq(caregiverProfiles.userId, fatimaUserId))
+        .limit(1)
+    : [];
+  const [employer] = atlasUserId
+    ? await authDb
+        .select({ id: employerAccounts.id })
+        .from(employerAccounts)
+        .where(eq(employerAccounts.userId, atlasUserId))
+        .limit(1)
+    : [];
+
+  const familyId = family?.id ?? null;
+  const caregiverId = caregiver?.id ?? null;
+  const employerId = employer?.id ?? null;
+  if (!familyId || !caregiverId) {
+    console.log("  ⚠ bookings skipped (missing demo profiles)");
+    return;
+  }
+
+  const HOUR = 3_600_000;
+  const DAY = 24 * HOUR;
+  const now = Date.now();
+  const at = (offsetMs: number, hour: number, durHours: number) => {
+    const d = new Date(now + offsetMs);
+    d.setUTCHours(hour, 0, 0, 0);
+    return { start: new Date(d), end: new Date(d.getTime() + durHours * HOUR) };
+  };
+
+  // [bookingStatus, escrowStatus|null, offset, hour, durHours, subsidy, withEmployer]
+  type Plan = {
+    bStatus: "requested" | "confirmed" | "in_progress" | "completed" | "disputed";
+    eStatus: "authorized" | "captured" | "released" | "disputed" | null;
+    start: Date;
+    end: Date;
+    subsidy: number;
+    employer: boolean;
+  };
+  const plans: Plan[] = [
+    {
+      bStatus: "completed",
+      eStatus: "released",
+      ...at(-10 * DAY, 9, 4),
+      subsidy: 0,
+      employer: false,
+    },
+    {
+      bStatus: "completed",
+      eStatus: "released",
+      ...at(-8 * DAY, 9, 4),
+      subsidy: 17920,
+      employer: true,
+    },
+    {
+      bStatus: "disputed",
+      eStatus: "disputed",
+      ...at(-5 * DAY, 14, 3),
+      subsidy: 0,
+      employer: false,
+    },
+    {
+      bStatus: "in_progress",
+      eStatus: "captured",
+      ...at(0, new Date(now).getUTCHours(), 2),
+      subsidy: 0,
+      employer: false,
+    },
+    {
+      bStatus: "confirmed",
+      eStatus: "authorized",
+      ...at(2 * DAY, 9, 3),
+      subsidy: 0,
+      employer: false,
+    },
+    { bStatus: "requested", eStatus: null, ...at(5 * DAY, 10, 3), subsidy: 0, employer: false },
+  ];
+
+  for (const p of plans) {
+    const gross = round(40 * 100 * ((p.end.getTime() - p.start.getTime()) / HOUR)); // 40 MAD/h
+    const [b] = await authDb
+      .insert(bookings)
+      .values({
+        caregiverId,
+        familyId,
+        employerAccountId: p.employer ? employerId : null,
+        careType: "daya",
+        startTime: p.start,
+        endTime: p.end,
+        childrenCount: 1,
+        status: p.bStatus,
+        familyEndedAt: p.bStatus === "completed" ? p.end : null,
+        caregiverEndedAt: p.bStatus === "completed" ? p.end : null,
+      })
+      .returning({ id: bookings.id });
+    if (!b || !p.eStatus) continue;
+
+    const a = escrowAmounts(gross, p.subsidy);
+    await authDb.insert(escrows).values({
+      bookingId: b.id,
+      familyId,
+      caregiverId,
+      ...a,
+      status: p.eStatus,
+      gatewayRef: `dev_auth_${b.id}`,
+      authorizedAt: p.start,
+      capturedAt: p.eStatus === "authorized" ? null : p.start,
+      releasedAt: p.eStatus === "released" ? p.end : null,
+      disputeWindowEndsAt:
+        p.eStatus === "released" || p.eStatus === "disputed"
+          ? new Date(p.end.getTime() + DAY)
+          : null,
+    });
+
+    if (p.subsidy > 0 && employerId) {
+      await authDb
+        .update(employerAccounts)
+        .set({ totalBudgetUsed: p.subsidy })
+        .where(eq(employerAccounts.id, employerId));
+    }
+  }
+  console.log(`  ✓ ${plans.length} bookings + escrows`);
+}
+
 async function seed() {
   console.log("Seeding demo data...");
   const passwordHash = await hash(DEMO_PASSWORD, ARGON2ID_OPTIONS);
@@ -453,6 +626,8 @@ async function seed() {
     }
   }
   console.log(`  ✓ ${employerUsers.length} employers`);
+
+  await seedBookings();
 
   console.log("Demo seed complete.");
 }

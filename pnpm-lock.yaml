@@ -126,6 +126,9 @@ importers:
       '@riaya/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@riaya/payments':
+        specifier: workspace:*
+        version: link:../../packages/payments
       drizzle-orm:
         specifier: ^0.38.2
         version: 0.38.4(@types/react@19.2.16)(pg@8.21.0)(postgres@3.4.9)(react@19.2.7)
@@ -237,9 +240,6 @@ importers:
       '@riaya/core':
         specifier: workspace:*
         version: link:../core
-      '@riaya/db':
-        specifier: workspace:*
-        version: link:../db
     devDependencies:
       typescript:
         specifier: ^5.7.2

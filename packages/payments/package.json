@@ -4,11 +4,13 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./amounts": "./src/amounts.ts",
+    "./state-machine": "./src/state-machine.ts",
+    "./gateway": "./src/gateway.ts"
   },
   "dependencies": {
-    "@riaya/core": "workspace:*",
-    "@riaya/db": "workspace:*"
+    "@riaya/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

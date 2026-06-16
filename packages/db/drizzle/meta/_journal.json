@@ -43,6 +43,13 @@
       "when": 1781430070688,
       "tag": "0005_sprint3_availability",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781430070689,
+      "tag": "0006_sprint4_payments",
+      "breakpoints": true
     }
   ]
 }

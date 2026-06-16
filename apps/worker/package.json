@@ -12,6 +12,7 @@
   "dependencies": {
     "@riaya/core": "workspace:*",
     "@riaya/db": "workspace:*",
+    "@riaya/payments": "workspace:*",
     "drizzle-orm": "^0.38.2",
     "pg-boss": "^10.1.5"
   },
