@@ -3,7 +3,7 @@
 
 ## SESSION_END — 2026-06-16 — SPRINT 4 COMPLETE ✅
 
-Sprint: 4 — DONE (Payments & Escrow + Employer subsidy). Awaiting Sprint 5 approval. NOT yet committed (local only).
+Sprint: 4 — DONE (Payments & Escrow + Employer subsidy). COMMITTED + PUSHED → `origin/main` @ `a8a3b91`. Awaiting Sprint 5 approval.
 
 Built Module E end-to-end. Full detail in `.claude/.logs/sprint-4-snapshot.md`.
 
