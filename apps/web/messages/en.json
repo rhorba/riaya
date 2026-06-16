@@ -40,7 +40,9 @@
       "admin": "Admin"
     },
     "earnings": "Earnings",
-    "invoices": "Invoices"
+    "invoices": "Invoices",
+    "verification": "Verification",
+    "notifications": "Notifications"
   },
   "common": {
     "save": "Save",
@@ -301,5 +303,69 @@
       "issued": "Issued",
       "paid": "Paid"
     }
+  },
+  "documentTypes": {
+    "cin": "National ID card (CIN)",
+    "police_clearance": "Police clearance",
+    "health_cert": "Health certificate",
+    "reference": "Reference letter",
+    "certificate": "Diploma / certificate"
+  },
+  "documentStatus": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "expired": "Expired"
+  },
+  "verificationDash": {
+    "title": "My verification",
+    "subtitle": "The more verified your profile, the more families trust you.",
+    "currentLevel": "Current level",
+    "myDocuments": "My documents",
+    "noDocuments": "No documents uploaded yet.",
+    "noProfile": "Create your caregiver profile first.",
+    "createProfile": "Create my profile",
+    "uploadTitle": "Upload a document",
+    "uploadHint": "Your documents are confidential and visible only to the Riaya team.",
+    "documentType": "Document type",
+    "file": "File",
+    "fileConstraints": "JPEG, PNG or PDF · {mb} MB maximum",
+    "consent": "I consent to Riaya processing this document for verification purposes (Law 09-08).",
+    "upload": "Upload",
+    "uploading": "Uploading…",
+    "uploaded": "Document uploaded."
+  },
+  "verificationErrors": {
+    "invalidInput": "Please check the information entered.",
+    "consentRequired": "You must give consent to upload this document.",
+    "file_empty": "The file is empty.",
+    "file_too_large": "The file exceeds the 5 MB maximum.",
+    "file_type_not_allowed": "Format not allowed. Use JPEG, PNG or PDF.",
+    "profileNotFound": "Create your caregiver profile first.",
+    "createFailed": "Upload failed. Please try again."
+  },
+  "reviews": {
+    "prompt": "How did this session go?",
+    "rating": "Rating",
+    "stars": "{count} star(s)",
+    "commentPlaceholder": "Share your experience (optional)…",
+    "submit": "Submit my review",
+    "submitting": "Submitting…",
+    "thanks": "Thanks for your review!",
+    "errors": {
+      "invalidInput": "Please check your review.",
+      "ratingRequired": "Please give a rating.",
+      "forbidden": "You can't review this booking.",
+      "bookingNotFound": "Booking not found.",
+      "notCompleted": "You can leave a review once the session is completed.",
+      "alreadyReviewed": "You've already reviewed this session.",
+      "createFailed": "Submission failed. Please try again."
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "none": "No notifications.",
+    "unread": "Unread"
   }
 }

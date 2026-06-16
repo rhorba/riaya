@@ -40,7 +40,9 @@
       "admin": "مشرف"
     },
     "earnings": "الأرباح",
-    "invoices": "الفواتير"
+    "invoices": "الفواتير",
+    "verification": "التحقق",
+    "notifications": "الإشعارات"
   },
   "common": {
     "save": "حفظ",
@@ -301,5 +303,69 @@
       "issued": "صادرة",
       "paid": "مدفوعة"
     }
+  },
+  "documentTypes": {
+    "cin": "البطاقة الوطنية للتعريف (CIN)",
+    "police_clearance": "السجل العدلي",
+    "health_cert": "شهادة طبية",
+    "reference": "رسالة توصية",
+    "certificate": "شهادة / دبلوم"
+  },
+  "documentStatus": {
+    "pending": "قيد المراجعة",
+    "approved": "مقبول",
+    "rejected": "مرفوض",
+    "expired": "منتهي الصلاحية"
+  },
+  "verificationDash": {
+    "title": "التحقق من ملفي",
+    "subtitle": "كلما زاد التحقق من ملفك، زادت ثقة الأسر بك.",
+    "currentLevel": "المستوى الحالي",
+    "myDocuments": "مستنداتي",
+    "noDocuments": "لم يتم رفع أي مستند بعد.",
+    "noProfile": "أنشئي ملف المربية أولاً.",
+    "createProfile": "إنشاء ملفي",
+    "uploadTitle": "رفع مستند",
+    "uploadHint": "مستنداتك سرية ولا يطّلع عليها سوى فريق رعاية.",
+    "documentType": "نوع المستند",
+    "file": "الملف",
+    "fileConstraints": "JPEG أو PNG أو PDF · بحد أقصى {mb} ميغابايت",
+    "consent": "أوافق على معالجة رعاية لهذا المستند لأغراض التحقق (القانون 09-08).",
+    "upload": "رفع",
+    "uploading": "جارٍ الرفع…",
+    "uploaded": "تم رفع المستند."
+  },
+  "verificationErrors": {
+    "invalidInput": "يرجى التحقق من المعلومات المُدخلة.",
+    "consentRequired": "يجب أن توافقي على رفع هذا المستند.",
+    "file_empty": "الملف فارغ.",
+    "file_too_large": "حجم الملف يتجاوز 5 ميغابايت.",
+    "file_type_not_allowed": "صيغة غير مسموح بها. استخدمي JPEG أو PNG أو PDF.",
+    "profileNotFound": "أنشئي ملف المربية أولاً.",
+    "createFailed": "فشل الرفع. يرجى المحاولة مرة أخرى."
+  },
+  "reviews": {
+    "prompt": "كيف كانت هذه الجلسة؟",
+    "rating": "التقييم",
+    "stars": "{count} نجمة",
+    "commentPlaceholder": "شاركي تجربتك (اختياري)…",
+    "submit": "إرسال تقييمي",
+    "submitting": "جارٍ الإرسال…",
+    "thanks": "شكراً على تقييمك!",
+    "errors": {
+      "invalidInput": "يرجى التحقق من تقييمك.",
+      "ratingRequired": "يرجى منح تقييم.",
+      "forbidden": "لا يمكنك تقييم هذا الحجز.",
+      "bookingNotFound": "الحجز غير موجود.",
+      "notCompleted": "يمكنك ترك تقييم بعد انتهاء الجلسة.",
+      "alreadyReviewed": "لقد تركت تقييماً لهذه الجلسة من قبل.",
+      "createFailed": "فشل الإرسال. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "markAllRead": "تحديد الكل كمقروء",
+    "none": "لا توجد إشعارات.",
+    "unread": "غير مقروء"
   }
 }

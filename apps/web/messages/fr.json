@@ -40,7 +40,9 @@
       "admin": "Admin"
     },
     "earnings": "Revenus",
-    "invoices": "Factures"
+    "invoices": "Factures",
+    "verification": "Vérification",
+    "notifications": "Notifications"
   },
   "common": {
     "save": "Enregistrer",
@@ -301,5 +303,69 @@
       "issued": "Émise",
       "paid": "Payée"
     }
+  },
+  "documentTypes": {
+    "cin": "Carte d'identité nationale (CIN)",
+    "police_clearance": "Casier judiciaire",
+    "health_cert": "Certificat médical",
+    "reference": "Lettre de référence",
+    "certificate": "Diplôme / certificat"
+  },
+  "documentStatus": {
+    "pending": "En attente",
+    "approved": "Approuvé",
+    "rejected": "Refusé",
+    "expired": "Expiré"
+  },
+  "verificationDash": {
+    "title": "Ma vérification",
+    "subtitle": "Plus votre profil est vérifié, plus les familles vous font confiance.",
+    "currentLevel": "Niveau actuel",
+    "myDocuments": "Mes documents",
+    "noDocuments": "Aucun document déposé pour le moment.",
+    "noProfile": "Créez d'abord votre profil d'assistante.",
+    "createProfile": "Créer mon profil",
+    "uploadTitle": "Déposer un document",
+    "uploadHint": "Vos documents sont confidentiels et visibles uniquement par l'équipe Riaya.",
+    "documentType": "Type de document",
+    "file": "Fichier",
+    "fileConstraints": "JPEG, PNG ou PDF · {mb} Mo maximum",
+    "consent": "Je consens à ce que Riaya traite ce document à des fins de vérification (loi 09-08).",
+    "upload": "Déposer",
+    "uploading": "Envoi…",
+    "uploaded": "Document déposé."
+  },
+  "verificationErrors": {
+    "invalidInput": "Veuillez vérifier les informations saisies.",
+    "consentRequired": "Vous devez donner votre consentement pour déposer ce document.",
+    "file_empty": "Le fichier est vide.",
+    "file_too_large": "Le fichier dépasse la taille maximale de 5 Mo.",
+    "file_type_not_allowed": "Format non autorisé. Utilisez JPEG, PNG ou PDF.",
+    "profileNotFound": "Créez d'abord votre profil d'assistante.",
+    "createFailed": "L'envoi a échoué. Veuillez réessayer."
+  },
+  "reviews": {
+    "prompt": "Comment s'est passée cette garde ?",
+    "rating": "Note",
+    "stars": "{count} étoile(s)",
+    "commentPlaceholder": "Partagez votre expérience (facultatif)…",
+    "submit": "Envoyer mon avis",
+    "submitting": "Envoi…",
+    "thanks": "Merci pour votre avis !",
+    "errors": {
+      "invalidInput": "Veuillez vérifier votre avis.",
+      "ratingRequired": "Veuillez attribuer une note.",
+      "forbidden": "Vous ne pouvez pas évaluer cette réservation.",
+      "bookingNotFound": "Réservation introuvable.",
+      "notCompleted": "Vous pourrez laisser un avis une fois la garde terminée.",
+      "alreadyReviewed": "Vous avez déjà laissé un avis pour cette garde.",
+      "createFailed": "L'envoi a échoué. Veuillez réessayer."
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "none": "Aucune notification.",
+    "unread": "Non lue"
   }
 }

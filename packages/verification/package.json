@@ -4,11 +4,13 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./levels": "./src/levels.ts",
+    "./files": "./src/files.ts",
+    "./storage": "./src/storage.ts"
   },
   "dependencies": {
-    "@riaya/core": "workspace:*",
-    "@riaya/db": "workspace:*"
+    "@riaya/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

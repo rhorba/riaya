@@ -1,4 +1,5 @@
 import { signOutAction } from "@/app/[locale]/auth/actions";
+import { getUnreadCount } from "@/app/[locale]/notifications/actions";
 import { getSessionUser } from "@/lib/session";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -11,6 +12,7 @@ import Link from "next/link";
 export async function AppHeader() {
   const t = await getTranslations("nav");
   const user = await getSessionUser();
+  const unread = user ? await getUnreadCount() : 0;
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/90 backdrop-blur">
@@ -57,6 +59,12 @@ export async function AppHeader() {
                   >
                     {t("earnings")}
                   </Link>
+                  <Link
+                    href="/caregiver/verification"
+                    className="text-gray-600 hover:text-[var(--color-terracotta-600)]"
+                  >
+                    {t("verification")}
+                  </Link>
                 </>
               )}
               {user.role === "employer" && (
@@ -67,6 +75,17 @@ export async function AppHeader() {
                   {t("invoices")}
                 </Link>
               )}
+              <Link
+                href="/notifications"
+                className="relative text-gray-600 hover:text-[var(--color-terracotta-600)]"
+              >
+                {t("notifications")}
+                {unread > 0 && (
+                  <span className="absolute -top-2 -end-3 inline-flex min-w-4 items-center justify-center rounded-full bg-[var(--color-terracotta-500)] px-1 text-[10px] font-semibold text-white">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
+              </Link>
               <span className="rounded-full bg-[var(--color-sage-50)] px-3 py-1 text-xs font-medium text-[var(--color-sage-600)]">
                 {t(`roles.${user.role}`)}
               </span>

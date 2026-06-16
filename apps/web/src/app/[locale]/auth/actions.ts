@@ -1,6 +1,7 @@
 "use server";
 
 import { signIn, signOut } from "@/auth";
+import { sendWelcomeEmail } from "@/lib/email-service";
 import { hashPassword } from "@/lib/password";
 import { SignInSchema, SignUpSchema } from "@riaya/core";
 import { authDb, users } from "@riaya/db";
@@ -39,6 +40,9 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     role, // never 'admin' — enforced by SignUpSchema
     passwordHash,
   });
+
+  // Welcome email (best-effort; never blocks signup). No-op until Resend is set.
+  await sendWelcomeEmail(normalizedEmail, name);
 
   // signIn throws NEXT_REDIRECT on success (which must propagate).
   try {

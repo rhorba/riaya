@@ -9,7 +9,10 @@ import {
   enrolledEmployees,
   escrows,
   familyProfiles,
+  notifications,
+  reviews,
   users,
+  verificationDocuments,
 } from "./schema/index.js";
 
 /**
@@ -530,6 +533,146 @@ async function seedBookings() {
   console.log(`  ✓ ${plans.length} bookings + escrows`);
 }
 
+// ── Verification documents (Sprint 5) ─────────────────────────────────────────
+// Seeds documents CONSISTENT with each caregiver's hardcoded verificationLevel so
+// computeVerificationLevel() would reproduce that level. Idempotent: skipped once
+// any verification document exists. fileKeys are placeholders (no real bytes).
+type DocSeed = {
+  type: "cin" | "police_clearance" | "health_cert" | "reference";
+  approved: boolean;
+};
+
+const DOCS_FOR_LEVEL: Record<string, DocSeed[]> = {
+  certified: [
+    { type: "cin", approved: true },
+    { type: "police_clearance", approved: true },
+    { type: "health_cert", approved: true },
+    { type: "reference", approved: true },
+  ],
+  background_cleared: [
+    { type: "cin", approved: true },
+    { type: "police_clearance", approved: true },
+  ],
+  cin_verified: [{ type: "cin", approved: true }],
+  id_checked: [{ type: "cin", approved: false }],
+  unverified: [],
+};
+
+async function seedVerificationDocuments() {
+  const existing = await authDb
+    .select({ id: verificationDocuments.id })
+    .from(verificationDocuments)
+    .limit(1);
+  if (existing.length > 0) {
+    console.log("  ✓ verification documents (already seeded — skipped)");
+    return;
+  }
+
+  let count = 0;
+  for (const u of caregiverUsers) {
+    const profile = caregiverProfilesByEmail[u.email];
+    if (!profile) continue;
+    const level = profile.verificationLevel ?? "unverified";
+    const docs = DOCS_FOR_LEVEL[level] ?? [];
+    if (docs.length === 0) continue;
+
+    const [cgUser] = await authDb
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, u.email))
+      .limit(1);
+    if (!cgUser) continue;
+    const [cg] = await authDb
+      .select({ id: caregiverProfiles.id })
+      .from(caregiverProfiles)
+      .where(eq(caregiverProfiles.userId, cgUser.id))
+      .limit(1);
+    if (!cg) continue;
+
+    for (const d of docs) {
+      await authDb.insert(verificationDocuments).values({
+        caregiverId: cg.id,
+        type: d.type,
+        fileKey: `verification/${cg.id}/${d.type}/seed-${d.type}.pdf`,
+        status: d.approved ? "approved" : "pending",
+        consentGivenAt: new Date(),
+        reviewedAt: d.approved ? new Date() : null,
+      });
+      count++;
+    }
+  }
+  console.log(`  ✓ ${count} verification documents`);
+}
+
+// ── Reviews + notifications (Sprint 5) ─────────────────────────────────────────
+// Mutual reviews on the completed demo bookings + a couple of demo notifications.
+// Idempotent: each guarded by an existence check.
+async function seedReviewsAndNotifications() {
+  const reviewExists = await authDb.select({ id: reviews.id }).from(reviews).limit(1);
+  if (reviewExists.length > 0) {
+    console.log("  ✓ reviews + notifications (already seeded — skipped)");
+    return;
+  }
+
+  const completed = await authDb
+    .select({ id: bookings.id, caregiverId: bookings.caregiverId, familyId: bookings.familyId })
+    .from(bookings)
+    .where(eq(bookings.status, "completed"));
+
+  let reviewCount = 0;
+  for (const b of completed) {
+    const [cg] = await authDb
+      .select({ userId: caregiverProfiles.userId })
+      .from(caregiverProfiles)
+      .where(eq(caregiverProfiles.id, b.caregiverId))
+      .limit(1);
+    const [fam] = await authDb
+      .select({ userId: familyProfiles.userId })
+      .from(familyProfiles)
+      .where(eq(familyProfiles.id, b.familyId))
+      .limit(1);
+    if (!cg || !fam) continue;
+
+    await authDb.insert(reviews).values([
+      {
+        bookingId: b.id,
+        reviewerId: fam.userId,
+        revieweeId: cg.userId,
+        rating: 5,
+        comment: "Excellente garde, mes enfants étaient ravis. Très professionnelle.",
+        reviewerRole: "family",
+      },
+      {
+        bookingId: b.id,
+        reviewerId: cg.userId,
+        revieweeId: fam.userId,
+        rating: 5,
+        comment: "Famille adorable, enfants bien élevés. Avec plaisir à nouveau.",
+        reviewerRole: "caregiver",
+      },
+    ]);
+    reviewCount += 2;
+  }
+
+  // A couple of demo notifications so the inbox isn't empty for the demo logins.
+  const [sara] = await authDb
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, "sara@demo.riaya.ma"))
+    .limit(1);
+  if (sara) {
+    await authDb.insert(notifications).values({
+      userId: sara.id,
+      type: "review_request",
+      title: "Donnez votre avis",
+      body: "Votre garde est terminée. Laissez un avis pour soutenir les assistantes.",
+      data: {},
+    });
+  }
+
+  console.log(`  ✓ ${reviewCount} reviews + demo notifications`);
+}
+
 async function seed() {
   console.log("Seeding demo data...");
   const passwordHash = await hash(DEMO_PASSWORD, ARGON2ID_OPTIONS);
@@ -628,6 +771,8 @@ async function seed() {
   console.log(`  ✓ ${employerUsers.length} employers`);
 
   await seedBookings();
+  await seedVerificationDocuments();
+  await seedReviewsAndNotifications();
 
   console.log("Demo seed complete.");
 }

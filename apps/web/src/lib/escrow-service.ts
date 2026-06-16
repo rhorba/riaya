@@ -249,6 +249,68 @@ export async function openDisputeWindowForBooking(
 }
 
 /**
+ * Release-on-both-reviews. Releases a `captured` escrow to the caregiver as soon
+ * as BOTH parties have reviewed — the "both reviews" branch of "both reviews OR
+ * 24h" (Riaya non-negotiable #6). The `escrow.sweep` worker is the 24h fallback;
+ * whichever fires first wins. Guarded on `status === 'captured'` so the two paths
+ * never double-pay. Returns the payee + amount so the caller can notify.
+ */
+export async function releaseEscrowForBooking(
+  actorUserId: string,
+  bookingId: string
+): Promise<{ released: boolean; caregiverUserId: string | null; payout: Money }> {
+  return withSystem(actorUserId, async (tx) => {
+    const [escrow] = await tx
+      .select()
+      .from(escrows)
+      .where(eq(escrows.bookingId, bookingId))
+      .limit(1);
+    if (!escrow || escrow.status !== "captured") {
+      return { released: false, caregiverUserId: null, payout: money(0) };
+    }
+
+    assertEscrowTransition("captured", "released");
+    await gateway.payout(
+      money(escrow.caregiverPayout),
+      { accountRef: "dev_rib", holderName: "caregiver" },
+      escrow.id
+    );
+
+    // Guarded update: a concurrent worker sweep that already released this escrow
+    // makes this a no-op (no double payout).
+    const updated = await tx
+      .update(escrows)
+      .set({ status: "released", releasedAt: new Date() })
+      .where(and(eq(escrows.id, escrow.id), eq(escrows.status, "captured")))
+      .returning({ id: escrows.id });
+    if (updated.length === 0) {
+      return { released: false, caregiverUserId: null, payout: money(0) };
+    }
+
+    await auditEscrow(
+      tx,
+      actorUserId,
+      escrow.id,
+      "release",
+      { status: "captured" },
+      { status: "released", payout: escrow.caregiverPayout }
+    );
+
+    const [cg] = await tx
+      .select({ userId: caregiverProfiles.userId })
+      .from(caregiverProfiles)
+      .where(eq(caregiverProfiles.id, escrow.caregiverId))
+      .limit(1);
+
+    return {
+      released: true,
+      caregiverUserId: cg?.userId ?? null,
+      payout: money(escrow.caregiverPayout),
+    };
+  });
+}
+
+/**
  * Refund-on-cancel. Releases the pre-auth and refunds the family. If a
  * cancellation fee applies, that portion is captured and kept as caregiver
  * compensation (recorded on `cancellationFee`); the remainder is refunded.

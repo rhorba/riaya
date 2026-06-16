@@ -1,11 +1,18 @@
 "use client";
 
 import { BookingStatusBadge } from "@/components/booking-status-badge";
+import { ReviewForm } from "@/components/review-form";
 import { formatMoney, money } from "@riaya/core";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { type FamilyBooking, cancelBooking, familyConfirmEnd, startSession } from "./actions";
+import {
+  type FamilyBooking,
+  cancelBooking,
+  familyConfirmEnd,
+  leaveReview,
+  startSession,
+} from "./actions";
 
 export function BookingsTracker({ bookings }: { bookings: FamilyBooking[] }) {
   const t = useTranslations("booking");
@@ -103,6 +110,10 @@ function Row({
           </Btn>
         )}
       </div>
+
+      {booking.status === "completed" && !booking.reviewed && (
+        <ReviewForm bookingId={booking.id} action={leaveReview} />
+      )}
     </li>
   );
 }

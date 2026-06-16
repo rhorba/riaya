@@ -1,18 +1,24 @@
 "use server";
 
 import { type ActionResult, fail, ok } from "@/lib/action-result";
+import { onBookingCompleted, onBookingConfirmed, onBookingDeclined } from "@/lib/booking-events";
 import { auditBooking, confirmSessionEnd } from "@/lib/booking-shared";
 import { withRoleTx } from "@/lib/db";
 import { authorizeEscrowForBooking, openDisputeWindowForBooking } from "@/lib/escrow-service";
+import { submitReview } from "@/lib/review-service";
+import { withRole } from "@/lib/session";
 import { assertTransition, checkAvailability } from "@riaya/booking";
 import { BookingDeclineSchema } from "@riaya/core";
-import { type Tx, bookings, caregiverProfiles } from "@riaya/db";
-import { desc, eq } from "drizzle-orm";
+import { type Tx, bookings, caregiverProfiles, reviews } from "@riaya/db";
+import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 /** Booking rows for the caregiver inbox. No family identity / children PII — only
  * what the caregiver legitimately needs to decide (count, type, time, notes). */
-export type CaregiverBooking = typeof bookings.$inferSelect;
+export type CaregiverBooking = typeof bookings.$inferSelect & {
+  /** Whether the signed-in caregiver has already reviewed this booking. */
+  reviewed: boolean;
+};
 
 /** Resolve the signed-in caregiver's profile id (null if not yet created). */
 async function caregiverIdFor(tx: Tx, userId: string): Promise<string | null> {
@@ -30,11 +36,13 @@ export const getCaregiverBookings = withRoleTx(
   async (tx, user): Promise<CaregiverBooking[]> => {
     const caregiverId = await caregiverIdFor(tx, user.id);
     if (!caregiverId) return [];
-    return tx
-      .select()
+    const rows = await tx
+      .select({ booking: bookings, reviewId: reviews.id })
       .from(bookings)
+      .leftJoin(reviews, and(eq(reviews.bookingId, bookings.id), eq(reviews.reviewerId, user.id)))
       .where(eq(bookings.caregiverId, caregiverId))
       .orderBy(desc(bookings.createdAt));
+    return rows.map((r) => ({ ...r.booking, reviewed: r.reviewId != null }));
   }
 );
 
@@ -86,14 +94,20 @@ export async function acceptBooking(bookingId: string): Promise<ActionResult> {
   const res = await acceptBookingTx(bookingId);
   if (!res.ok) return res;
   await authorizeEscrowForBooking(res.data.actorId, bookingId);
+  await onBookingConfirmed(res.data.actorId, bookingId);
   revalidatePath("/caregiver/bookings");
   return ok(undefined);
 }
 
 /** Caregiver declines a requested booking → cancelled (with reason). */
-export const declineBooking = withRoleTx(
+const declineBookingTx = withRoleTx(
   ["caregiver"],
-  async (tx, user, bookingId: string, input: unknown): Promise<ActionResult> => {
+  async (
+    tx,
+    user,
+    bookingId: string,
+    input: unknown
+  ): Promise<ActionResult<{ actorId: string }>> => {
     const parsed = BookingDeclineSchema.safeParse(input);
     if (!parsed.success) return fail("invalidInput");
 
@@ -115,10 +129,17 @@ export const declineBooking = withRoleTx(
       { status: "cancelled" }
     );
 
-    revalidatePath("/caregiver/bookings");
-    return ok(undefined);
+    return ok({ actorId: user.id });
   }
 );
+
+export async function declineBooking(bookingId: string, input: unknown): Promise<ActionResult> {
+  const res = await declineBookingTx(bookingId, input);
+  if (!res.ok) return res;
+  await onBookingDeclined(res.data.actorId, bookingId);
+  revalidatePath("/caregiver/bookings");
+  return ok(undefined);
+}
 
 /** Caregiver confirms the session ended (completes when the family also confirms). */
 const caregiverConfirmEndTx = withRoleTx(
@@ -137,7 +158,20 @@ const caregiverConfirmEndTx = withRoleTx(
 export async function caregiverConfirmEnd(bookingId: string): Promise<ActionResult> {
   const res = await caregiverConfirmEndTx(bookingId);
   if (!res.ok) return res;
-  if (res.data.completed) await openDisputeWindowForBooking(res.data.actorId, bookingId);
+  if (res.data.completed) {
+    await openDisputeWindowForBooking(res.data.actorId, bookingId);
+    await onBookingCompleted(res.data.actorId, bookingId);
+  }
   revalidatePath("/caregiver/bookings");
   return ok(undefined);
 }
+
+/** Caregiver reviews the family after completion (releases escrow if both reviewed). */
+export const leaveReview = withRole(
+  ["caregiver"],
+  async (user, bookingId: string, input: unknown): Promise<ActionResult<{ released: boolean }>> => {
+    const res = await submitReview(user, bookingId, input, "caregiver");
+    if (res.ok) revalidatePath("/caregiver/bookings");
+    return res;
+  }
+);

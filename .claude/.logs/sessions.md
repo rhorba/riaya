@@ -1,6 +1,31 @@
 # sessions
 <!-- append-only log — session start/end snapshots -->
 
+## SESSION_END — 2026-06-16 (b) — SPRINT 5 COMPLETE ✅
+
+Sprint: 5 — DONE (Verification system + Reviews + Notifications + Email). Awaiting Sprint 6 approval. **NOT yet committed/pushed at time of writing — commit + push to `main` next.**
+
+**Key finding: NO migration needed.** Schema (`verification_documents`/`reviews`/`notifications`/`access_audit_logs`) + RLS + enums were already in place from S0–1; `ReviewCreateSchema`/`DocumentTypeSchema` already in core. Sprint 5 = packages + services + actions + UI + adapters only. Full detail in `.claude/.logs/sprint-5-snapshot.md`.
+
+Completed this session (S5-01..S5-11):
+- **@riaya/verification** made PURE (dropped `@riaya/db` dep): `levels.ts` (`computeVerificationLevel` progressive ladder + `levelRank`), `files.ts` (`validateDocumentFile` JPEG/PNG/PDF + 5MB + stable codes), `storage.ts` (`DocumentStorage`/`DevStorage`/`buildDocumentKey`/`SIGNED_URL_TTL_SECONDS=900`). Subpaths all client-safe.
+- **@riaya/notifications**: `email.ts` (`EmailProvider`/`DevEmailProvider`/`ResendEmailProvider` lazy import/`createEmailProvider` env-select), `templates.ts` (PURE FR welcome/bookingConfirmation/payoutReceipt/reviewRequest, no children PII).
+- **verification-service.ts**: upload (consent→validate→storage.put PRIVATE→insert key-only+audit+recompute level), `getDocumentSignedUrl` (owner/admin via RLS visibility, **mandatory access_audit on every mint**), `reviewDocument` (admin approve/reject→recompute+notify). **notification-service.ts** (cross-user inserts via admin context, `notif` FR copy builders), **email-service.ts** (best-effort), **review-service.ts** (post-completion only, manual authz under system ctx, recompute avgRating, both-reviewed→release escrow early), **booking-events.ts** (notify+email side-effects after commit).
+- **escrow-service** `releaseEscrowForBooking` (guarded captured→released early release; worker `escrow.sweep` = 24h fallback, now also notifies + emails payout). "both reviews OR 24h" branch fully implemented (was 24h-only).
+- Lifecycle wired: request/accept/decline/complete/release/doc-review/signup → in-app + email. `requestBooking`/`declineBooking` split into `*Tx`+wrapper.
+- **UI**: `/caregiver/verification` (badge+per-doc status+upload w/ consent gate), `/notifications` (list+mark-all-read+nav unread badge), `ReviewForm` (shared, action-injected) on completed bookings (family+caregiver). `reviewed` flag in both bookings queries.
+- **i18n** fr/ar/en: nav (verification/notifications), documentTypes, documentStatus, verificationDash, verificationErrors, reviews(+errors), notifications.
+- **Tests +18**: verification `levels.test.ts` (14 pure), `verification-rls.test.ts` (4 live: family 403 on CIN, docs_update admin-only, access-audit append/admin-read, review reviewer_id RBAC).
+- **Seed** (idempotent): 13 verification docs (consistent w/ each caregiver's level), 4 reviews on completed bookings, demo notification.
+
+VERIFIED: `pnpm lint` (149 files) clean; `pnpm -r typecheck` (9) clean; `pnpm test` **116/116** (was 98); `pnpm --filter @riaya/web build` (webpack) passes (new `/caregiver/verification` + `/notifications`); fresh `down -v`→migrate(0000–0006)+RLS+seed(8/4/2 + 6 bookings + 13 docs + 4 reviews)+embed(8) clean.
+
+RESUME INSTRUCTIONS:
+1. Invoke orchestrator. SPRINT BOUNDARY — Sprint 5 done, LOCAL ONLY → commit + push to `main` (single-branch). Get Sprint 6 approval.
+2. Sprint 6 = Admin dashboard (KPIs, **verification queue** — `reviewDocument` service already built+tested, just needs admin pages + signed-URL view route, **dispute queue**, escrow health) + i18n/RTL/a11y sweep. Dispute raising (captured→disputed) + admin resolution also land here.
+3. Local run: `docker compose up -d postgres` (5439); export `DATABASE_URL`(riaya_app)+`DATABASE_URL_ADMIN`(riaya:riaya); `pnpm db:setup` (migrate→seed→embed); `pnpm dev`. rls.sql non-idempotent → `down -v` to re-migrate a dirty DB.
+4. Carry-forward: notification rows + email copy FR-only; DevStorage/DevEmailProvider in-memory/log (R2+Resend = v0.2 swap behind same interfaces, no dev creds); admin verification/dispute UI = Sprint 6; early-release recompute overrides seed's hardcoded illustrative avgRating once a demo review is left via the app.
+
 ## SESSION_END — 2026-06-16 — SPRINT 4 COMPLETE ✅
 
 Sprint: 4 — DONE (Payments & Escrow + Employer subsidy). COMMITTED + PUSHED → `origin/main` @ `a8a3b91`. Awaiting Sprint 5 approval.

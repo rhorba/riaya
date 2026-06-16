@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./email": "./src/email.ts",
+    "./templates": "./src/templates.ts"
   },
   "dependencies": {
     "@riaya/core": "workspace:*",
-    "@riaya/db": "workspace:*",
     "resend": "^4.0.1"
   },
   "devDependencies": {

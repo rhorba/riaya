@@ -1,6 +1,7 @@
 "use client";
 
 import { BookingStatusBadge } from "@/components/booking-status-badge";
+import { ReviewForm } from "@/components/review-form";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -9,6 +10,7 @@ import {
   acceptBooking,
   caregiverConfirmEnd,
   declineBooking,
+  leaveReview,
 } from "./actions";
 
 export function BookingsInbox({ bookings }: { bookings: CaregiverBooking[] }) {
@@ -155,6 +157,10 @@ function Row({ booking }: { booking: CaregiverBooking }) {
             {booking.caregiverEndedAt ? t("waitingFamilyEnd") : t("confirmEnd")}
           </button>
         </div>
+      )}
+
+      {booking.status === "completed" && !booking.reviewed && (
+        <ReviewForm bookingId={booking.id} action={leaveReview} />
       )}
     </li>
   );
