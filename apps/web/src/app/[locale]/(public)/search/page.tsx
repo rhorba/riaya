@@ -26,7 +26,13 @@ function str(v: string | string[] | undefined): string | undefined {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("search");
-  return { title: `${t("title")} · Riaya`, description: t("metaDescription") };
+  const title = `${t("title")} · Riaya`;
+  const description = t("metaDescription");
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+  };
 }
 
 export default async function SearchPage({

@@ -4,7 +4,12 @@ import { type ActionResult, fail, ok } from "@/lib/action-result";
 import { onBookingCompleted, onBookingConfirmed, onBookingDeclined } from "@/lib/booking-events";
 import { auditBooking, confirmSessionEnd } from "@/lib/booking-shared";
 import { withRoleTx } from "@/lib/db";
-import { authorizeEscrowForBooking, openDisputeWindowForBooking } from "@/lib/escrow-service";
+import {
+  authorizeEscrowForBooking,
+  holdEscrowForDispute,
+  openDisputeWindowForBooking,
+} from "@/lib/escrow-service";
+import { notif, notifyFamilyProfile } from "@/lib/notification-service";
 import { submitReview } from "@/lib/review-service";
 import { withRole } from "@/lib/session";
 import { assertTransition, checkAvailability } from "@riaya/booking";
@@ -175,3 +180,58 @@ export const leaveReview = withRole(
     return res;
   }
 );
+
+/** Caregiver raises a dispute on an in_progress booking → admin queue. */
+const raiseDisputeTx = withRoleTx(
+  ["caregiver"],
+  async (
+    tx,
+    user,
+    bookingId: string,
+    reason: string
+  ): Promise<ActionResult<{ actorId: string; familyId: string }>> => {
+    const caregiverId = await caregiverIdFor(tx, user.id);
+    if (!caregiverId) return fail("profileNotFound");
+
+    const [booking] = await tx.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+    if (!booking) return fail("bookingNotFound");
+    if (booking.caregiverId !== caregiverId) return fail("bookingNotFound");
+    if (booking.status !== "in_progress") return fail("invalidState");
+    assertTransition("in_progress", "disputed");
+
+    await tx
+      .update(bookings)
+      .set({
+        status: "disputed",
+        cancelReason: reason.slice(0, 500) || "dispute_by_caregiver",
+        updatedAt: new Date(),
+      })
+      .where(eq(bookings.id, bookingId));
+    await auditBooking(
+      tx,
+      user.id,
+      bookingId,
+      "dispute",
+      { status: "in_progress" },
+      {
+        status: "disputed",
+        reason,
+      }
+    );
+
+    return ok({ actorId: user.id, familyId: booking.familyId });
+  }
+);
+
+export async function raiseDispute(bookingId: string, reason: string): Promise<ActionResult> {
+  const res = await raiseDisputeTx(bookingId, reason);
+  if (!res.ok) return res;
+  await holdEscrowForDispute(res.data.actorId, bookingId);
+  await notifyFamilyProfile(
+    res.data.actorId,
+    res.data.familyId,
+    notif.disputeRaised(bookingId)
+  ).catch(() => {});
+  revalidatePath("/caregiver/bookings");
+  return ok(undefined);
+}

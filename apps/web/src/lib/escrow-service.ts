@@ -351,3 +351,34 @@ export async function refundEscrowForBooking(
     );
   });
 }
+
+/**
+ * Hold escrow when a dispute is raised. Moves escrow captured→disputed so funds
+ * are frozen until admin resolution. No-op if escrow is not in captured state.
+ */
+export async function holdEscrowForDispute(actorUserId: string, bookingId: string): Promise<void> {
+  await withSystem(actorUserId, async (tx) => {
+    const [escrow] = await tx
+      .select()
+      .from(escrows)
+      .where(eq(escrows.bookingId, bookingId))
+      .limit(1);
+    if (!escrow || escrow.status !== "captured") return;
+
+    assertEscrowTransition("captured", "disputed");
+    await tx
+      .update(escrows)
+      .set({ status: "disputed" })
+      .where(and(eq(escrows.id, escrow.id), eq(escrows.status, "captured")));
+    await auditEscrow(
+      tx,
+      actorUserId,
+      escrow.id,
+      "dispute",
+      { status: "captured" },
+      {
+        status: "disputed",
+      }
+    );
+  });
+}

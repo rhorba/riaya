@@ -141,4 +141,10 @@ export const notif = {
     body: "Un de vos documents de vérification a été refusé.",
     data: { documentId },
   }),
+  disputeRaised: (bookingId: string): NotificationInput => ({
+    type: "dispute_opened",
+    title: "Litige signalé",
+    body: "Un problème a été signalé sur une réservation. Notre équipe va examiner la situation.",
+    data: { bookingId },
+  }),
 } as const;

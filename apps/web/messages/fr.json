@@ -239,7 +239,9 @@
       "released": "Versé à l’assistante",
       "refunded": "Remboursé",
       "disputed": "En litige"
-    }
+    },
+    "raiseDispute": "Signaler un problème",
+    "disputeRaised": "Litige signalé — notre équipe va examiner la situation."
   },
   "availability": {
     "title": "Mes disponibilités",
@@ -284,7 +286,8 @@
     "slotConflict": "Vous avez déjà une réservation confirmée sur ce créneau.",
     "bookingNotFound": "Réservation introuvable.",
     "invalidState": "Cette action n'est pas possible pour l'état actuel de la réservation.",
-    "createFailed": "L'opération a échoué. Veuillez réessayer."
+    "createFailed": "L'opération a échoué. Veuillez réessayer.",
+    "disputeFailed": "Impossible de signaler le problème. Réessayez."
   },
   "earnings": {
     "title": "Mes revenus",

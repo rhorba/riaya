@@ -34,9 +34,26 @@ export async function generateMetadata({
   const { id } = await params;
   const caregiver = await getCaregiver(id);
   if (!caregiver) return { title: "Riaya" };
+
+  const title = `${caregiver.displayName} · Riaya`;
+  const description =
+    caregiver.bio ?? `Assistante maternelle vérifiée sur Riaya — garde d'enfants au Maroc.`;
+
   return {
-    title: caregiver.displayName,
-    description: caregiver.bio ?? undefined,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "profile",
+      ...(caregiver.photoUrl
+        ? {
+            images: [
+              { url: caregiver.photoUrl, width: 400, height: 400, alt: caregiver.displayName },
+            ],
+          }
+        : {}),
+    },
   };
 }
 

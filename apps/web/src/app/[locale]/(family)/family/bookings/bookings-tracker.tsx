@@ -11,6 +11,7 @@ import {
   cancelBooking,
   familyConfirmEnd,
   leaveReview,
+  raiseDispute,
   startSession,
 } from "./actions";
 
@@ -97,9 +98,22 @@ function Row({
           </Btn>
         )}
         {booking.status === "in_progress" && (
-          <Btn onClick={() => run(() => familyConfirmEnd(booking.id))} disabled={isPending} primary>
-            {booking.familyEndedAt ? t("waitingCaregiverEnd") : t("confirmEnd")}
-          </Btn>
+          <>
+            <Btn
+              onClick={() => run(() => familyConfirmEnd(booking.id))}
+              disabled={isPending}
+              primary
+            >
+              {booking.familyEndedAt ? t("waitingCaregiverEnd") : t("confirmEnd")}
+            </Btn>
+            <Btn
+              onClick={() => run(() => raiseDispute(booking.id, "dispute_by_family"))}
+              disabled={isPending}
+              danger
+            >
+              {t("raiseDispute")}
+            </Btn>
+          </>
         )}
         {(booking.status === "requested" || booking.status === "confirmed") && (
           <Btn
@@ -153,23 +167,21 @@ function Btn({
   onClick,
   disabled,
   primary,
+  danger,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
   primary?: boolean;
+  danger?: boolean;
 }) {
+  const cls = danger
+    ? "rounded-lg border border-red-300 px-4 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+    : primary
+      ? "rounded-lg bg-[var(--color-terracotta-500)] px-4 py-1.5 text-sm font-medium text-white hover:bg-[var(--color-terracotta-600)] disabled:opacity-60"
+      : "rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-60";
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={
-        primary
-          ? "rounded-lg bg-[var(--color-terracotta-500)] px-4 py-1.5 text-sm font-medium text-white hover:bg-[var(--color-terracotta-600)] disabled:opacity-60"
-          : "rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-60"
-      }
-    >
+    <button type="button" onClick={onClick} disabled={disabled} className={cls}>
       {children}
     </button>
   );

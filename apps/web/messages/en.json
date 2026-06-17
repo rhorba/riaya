@@ -239,7 +239,9 @@
       "released": "Paid out to caregiver",
       "refunded": "Refunded",
       "disputed": "In dispute"
-    }
+    },
+    "raiseDispute": "Report an issue",
+    "disputeRaised": "Dispute raised — our team will review the situation."
   },
   "availability": {
     "title": "My availability",
@@ -284,7 +286,8 @@
     "slotConflict": "You already have a confirmed booking for this slot.",
     "bookingNotFound": "Booking not found.",
     "invalidState": "This action is not possible for the booking's current state.",
-    "createFailed": "The operation failed. Please try again."
+    "createFailed": "The operation failed. Please try again.",
+    "disputeFailed": "Could not report the issue. Please try again."
   },
   "earnings": {
     "title": "My earnings",

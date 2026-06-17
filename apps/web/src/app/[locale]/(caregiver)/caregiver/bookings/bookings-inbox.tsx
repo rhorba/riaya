@@ -11,6 +11,7 @@ import {
   caregiverConfirmEnd,
   declineBooking,
   leaveReview,
+  raiseDispute,
 } from "./actions";
 
 export function BookingsInbox({ bookings }: { bookings: CaregiverBooking[] }) {
@@ -147,7 +148,7 @@ function Row({ booking }: { booking: CaregiverBooking }) {
       )}
 
       {booking.status === "in_progress" && (
-        <div className="mt-3">
+        <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => run(() => caregiverConfirmEnd(booking.id))}
@@ -155,6 +156,14 @@ function Row({ booking }: { booking: CaregiverBooking }) {
             className="rounded-lg bg-[var(--color-terracotta-500)] px-4 py-1.5 text-sm font-medium text-white hover:bg-[var(--color-terracotta-600)] disabled:opacity-60"
           >
             {booking.caregiverEndedAt ? t("waitingFamilyEnd") : t("confirmEnd")}
+          </button>
+          <button
+            type="button"
+            onClick={() => run(() => raiseDispute(booking.id, "dispute_by_caregiver"))}
+            disabled={isPending}
+            className="rounded-lg border border-red-300 px-4 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+          >
+            {t("raiseDispute")}
           </button>
         </div>
       )}

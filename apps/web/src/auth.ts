@@ -5,6 +5,7 @@ import NextAuth, { type NextAuthResult } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { verifyPassword } from "./lib/password.js";
+import { clearLoginFailures, isRateLimited, recordLoginFailure } from "./lib/rate-limit.js";
 
 /**
  * Auth.js v5 — Riaya.
@@ -36,17 +37,28 @@ const nextAuth = NextAuth({
         if (!parsed.success) return null;
         const { email, password } = parsed.data;
 
-        const [user] = await authDb
-          .select()
-          .from(users)
-          .where(eq(users.email, email.toLowerCase()))
-          .limit(1);
+        const key = email.toLowerCase();
 
-        // No user, OAuth-only account (no password), or deactivated → deny.
-        if (!user || !user.passwordHash || !user.isActive) return null;
+        // Reject immediately if this email is locked out (5 failures / 15 min).
+        // We return null (same as wrong password) to avoid confirming the email exists.
+        if (isRateLimited(key)) return null;
+
+        const [user] = await authDb.select().from(users).where(eq(users.email, key)).limit(1);
+
+        // No user, OAuth-only account (no password), or deactivated → deny + count.
+        if (!user || !user.passwordHash || !user.isActive) {
+          recordLoginFailure(key);
+          return null;
+        }
 
         const ok = await verifyPassword(user.passwordHash, password);
-        if (!ok) return null;
+        if (!ok) {
+          recordLoginFailure(key);
+          return null;
+        }
+
+        // Success — clear failure counter.
+        clearLoginFailures(key);
 
         // Role is attached for completeness; jwt callback re-reads from DB.
         return {

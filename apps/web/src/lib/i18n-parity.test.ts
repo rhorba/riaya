@@ -82,8 +82,9 @@ describe("RTL audit — no directional Tailwind in app/src", () => {
       const content = readFileSync(resolve(ROOT, rel), "utf8");
       const lines = content.split("\n");
       for (let i = 0; i < lines.length; i++) {
-        if (DIRECTIONAL_RE.test(lines[i])) {
-          violations.push(`${rel}:${i + 1} — ${lines[i].trim()}`);
+        const line = lines[i] ?? "";
+        if (DIRECTIONAL_RE.test(line)) {
+          violations.push(`${rel}:${i + 1} — ${line.trim()}`);
         }
       }
     }
