@@ -42,7 +42,9 @@
     "earnings": "الأرباح",
     "invoices": "الفواتير",
     "verification": "التحقق",
-    "notifications": "الإشعارات"
+    "notifications": "الإشعارات",
+    "adminDashboard": "المشرف",
+    "verifications": "التحققات"
   },
   "common": {
     "save": "حفظ",
@@ -367,5 +369,77 @@
     "markAllRead": "تحديد الكل كمقروء",
     "none": "لا توجد إشعارات.",
     "unread": "غير مقروء"
+  },
+  "admin": {
+    "title": "لوحة تحكم المشرف",
+    "nav": {
+      "dashboard": "لوحة التحكم",
+      "verifications": "التحققات",
+      "disputes": "النزاعات",
+      "escrow": "الضمان",
+      "ariaLabel": "تنقل لوحة الإدارة"
+    },
+    "dashboard": {
+      "title": "نظرة عامة",
+      "attention": "إجراء مطلوب",
+      "pendingDocs": "{count} وثيقة في انتظار المراجعة",
+      "openDisputes": "{count} نزاع مفتوح"
+    },
+    "kpi": {
+      "gmv": "الحجم الإجمالي (GMV)",
+      "gmvSub": "الحجوزات المحصّلة والمُحرَّرة",
+      "activeBookings": "الحجوزات النشطة",
+      "jobsEnabled": "ساعات الرعاية المنجزة",
+      "hours": "ساعة",
+      "caregivers": "المربيات",
+      "employers": "أصحاب العمل",
+      "users": "المستخدمون",
+      "pendingDocs": "الوثائق المعلّقة",
+      "disputes": "النزاعات المفتوحة"
+    },
+    "verifications": {
+      "title": "قائمة التحقق",
+      "subtitle": "الوثائق التي تنتظر مراجعة فريق رعاية.",
+      "empty": "لا توجد وثائق معلّقة. ✓",
+      "view": "عرض",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "notePlaceholder": "ملاحظة المشرف (اختياري)",
+      "viewing": "معاينة الوثيقة",
+      "close": "إغلاق",
+      "signedUrlNote": "الرابط الموقّع صالح لمدة 15 دقيقة. يتم تسجيل كل وصول.",
+      "viewError": "تعذّر إنشاء الرابط الآمن.",
+      "reviewError": "فشلت العملية. يرجى المحاولة مرة أخرى."
+    },
+    "disputes": {
+      "title": "النزاعات الجارية",
+      "subtitle": "كل نزاع يحجب الضمان حتى يتم الحل يدوياً.",
+      "empty": "لا توجد نزاعات مفتوحة. ✓",
+      "bookingId": "حجز #{id}",
+      "caregiverPayout": "مبلغ المربية: {amount}",
+      "escrow": "الضمان",
+      "releaseToCare": "تحرير للمربية",
+      "refundFamily": "استرداد للعائلة",
+      "irreversible": "هذا الإجراء لا يمكن التراجع عنه.",
+      "resolveError": "فشل الحل. يرجى المحاولة مرة أخرى."
+    },
+    "escrow": {
+      "title": "صحة الضمان",
+      "subtitle": "عرض فوري لحالة الضمانات.",
+      "byStatus": "حسب الحالة",
+      "nEscrows": "{count} ضمان",
+      "total": "المجموع",
+      "stuckTitle": "تفويضات معلّقة (> 48 ساعة)",
+      "noStuck": "لا توجد تفويضات معلّقة. ✓",
+      "authorizedAt": "مُرخَّص بتاريخ {date}",
+      "statuses": {
+        "pending": "في الانتظار",
+        "authorized": "مخوّل",
+        "captured": "محجوز",
+        "released": "محرَّر",
+        "refunded": "مسترجَع",
+        "disputed": "متنازع عليه"
+      }
+    }
   }
 }

@@ -62,7 +62,7 @@ export default async function EmployerInvoicesPage() {
                   {inv.ice ? ` · ICE ${inv.ice}` : ""}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="text-end">
                 <p className="font-semibold text-gray-900">{formatMoney(money(inv.total))}</p>
                 <p className="text-xs text-gray-400">{t(`status.${inv.status}`)}</p>
               </div>

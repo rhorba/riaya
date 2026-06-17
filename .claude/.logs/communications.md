@@ -41,3 +41,9 @@ Context: VerificationBadge component (5 levels, color-coded, hero trust signal).
 Verified: lint clean (87), typecheck clean, test 21/21, webpack build passes, fresh-DB migrate+seed clean+idempotent.
 Need: (next session) commit+push Sprint 1; Sprint 2 = caregiver search (public SSR, filterable by type/city/price/verification) + booking system (request→confirm→complete). CaregiverSearchSchema + BookingRequestSchema already in @riaya/core.
 Constraints: all feature reads through `db`+withUserContext (or `db` w/o context only for public USING(true) tables); booking state machine lives in @riaya/booking (Sprint 2/3); money stays centimes.
+
+HANDOFF: Frontend Dev → Tester
+Task: S6-01..S6-04 Admin dashboard (KPIs, verification queue, dispute queue, escrow health)
+Context: Admin area built at apps/web/src/app/[locale]/(admin)/admin/. All 4 pages + shared actions.ts + layout.tsx. Admin is role-gated (redirect to / if not admin). pnpm lint clean, pnpm build passes.
+Need: (1) Admin role guard test: non-admin user GET /admin → redirect to /. (2) KPI aggregates: admin context sees all data (RLS bypass). (3) resolveDispute action: disputed→released correctly transitions escrow+booking atomically, audit log written.
+Constraints: All admin queries run under withUserContext(db, userId, "admin") — admin role bypasses RLS. Document signed URL access is mandatory audit-logged (already enforced by verification-service). resolveDispute is irreversible.

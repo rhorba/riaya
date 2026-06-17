@@ -75,6 +75,22 @@ export async function AppHeader() {
                   {t("invoices")}
                 </Link>
               )}
+              {user.role === "admin" && (
+                <>
+                  <Link
+                    href="/admin"
+                    className="text-gray-600 hover:text-[var(--color-terracotta-600)]"
+                  >
+                    {t("adminDashboard")}
+                  </Link>
+                  <Link
+                    href="/admin/verifications"
+                    className="text-gray-600 hover:text-[var(--color-terracotta-600)]"
+                  >
+                    {t("verifications")}
+                  </Link>
+                </>
+              )}
               <Link
                 href="/notifications"
                 className="relative text-gray-600 hover:text-[var(--color-terracotta-600)]"

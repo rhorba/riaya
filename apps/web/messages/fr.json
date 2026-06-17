@@ -42,7 +42,9 @@
     "earnings": "Revenus",
     "invoices": "Factures",
     "verification": "Vérification",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "adminDashboard": "Admin",
+    "verifications": "Vérifications"
   },
   "common": {
     "save": "Enregistrer",
@@ -367,5 +369,77 @@
     "markAllRead": "Tout marquer comme lu",
     "none": "Aucune notification.",
     "unread": "Non lue"
+  },
+  "admin": {
+    "title": "Tableau de bord admin",
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "verifications": "Vérifications",
+      "disputes": "Litiges",
+      "escrow": "Séquestre",
+      "ariaLabel": "Navigation administration"
+    },
+    "dashboard": {
+      "title": "Vue d'ensemble",
+      "attention": "Action requise",
+      "pendingDocs": "{count, plural, one {# document en attente de vérification} other {# documents en attente de vérification}}",
+      "openDisputes": "{count, plural, one {# litige ouvert} other {# litiges ouverts}}"
+    },
+    "kpi": {
+      "gmv": "Volume brut (GMV)",
+      "gmvSub": "réservations capturées + libérées",
+      "activeBookings": "Réservations actives",
+      "jobsEnabled": "Heures de garde réalisées",
+      "hours": "heures",
+      "caregivers": "Assistantes",
+      "employers": "Employeurs",
+      "users": "Utilisateurs",
+      "pendingDocs": "Documents en attente",
+      "disputes": "Litiges ouverts"
+    },
+    "verifications": {
+      "title": "File de vérification",
+      "subtitle": "Documents en attente de révision par l'équipe Riaya.",
+      "empty": "Aucun document en attente. ✓",
+      "view": "Voir",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "notePlaceholder": "Note admin (facultatif)",
+      "viewing": "Aperçu du document",
+      "close": "Fermer",
+      "signedUrlNote": "Lien signé valide 15 minutes. Accès journalisé.",
+      "viewError": "Impossible de générer le lien sécurisé.",
+      "reviewError": "L'opération a échoué. Veuillez réessayer."
+    },
+    "disputes": {
+      "title": "Litiges en cours",
+      "subtitle": "Chaque litige bloque l'escrow jusqu'à résolution manuelle.",
+      "empty": "Aucun litige ouvert. ✓",
+      "bookingId": "Réservation #{id}",
+      "caregiverPayout": "Versement assistante : {amount}",
+      "escrow": "Escrow",
+      "releaseToCare": "Libérer à l'assistante",
+      "refundFamily": "Rembourser la famille",
+      "irreversible": "Cette action est irréversible.",
+      "resolveError": "La résolution a échoué. Veuillez réessayer."
+    },
+    "escrow": {
+      "title": "Santé de l'escrow",
+      "subtitle": "Vue en temps réel de l'état des escrows.",
+      "byStatus": "Par statut",
+      "nEscrows": "{count, plural, one {# escrow} other {# escrows}}",
+      "total": "Total",
+      "stuckTitle": "Autorisations bloquées (> 48h)",
+      "noStuck": "Aucune autorisation bloquée. ✓",
+      "authorizedAt": "Autorisé le {date}",
+      "statuses": {
+        "pending": "En attente",
+        "authorized": "Autorisé",
+        "captured": "Capturé",
+        "released": "Libéré",
+        "refunded": "Remboursé",
+        "disputed": "En litige"
+      }
+    }
   }
 }

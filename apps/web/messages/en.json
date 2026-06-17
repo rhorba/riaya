@@ -42,7 +42,9 @@
     "earnings": "Earnings",
     "invoices": "Invoices",
     "verification": "Verification",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "adminDashboard": "Admin",
+    "verifications": "Verifications"
   },
   "common": {
     "save": "Save",
@@ -367,5 +369,77 @@
     "markAllRead": "Mark all as read",
     "none": "No notifications.",
     "unread": "Unread"
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "nav": {
+      "dashboard": "Dashboard",
+      "verifications": "Verifications",
+      "disputes": "Disputes",
+      "escrow": "Escrow",
+      "ariaLabel": "Admin navigation"
+    },
+    "dashboard": {
+      "title": "Overview",
+      "attention": "Action required",
+      "pendingDocs": "{count, plural, one {# document pending verification} other {# documents pending verification}}",
+      "openDisputes": "{count, plural, one {# open dispute} other {# open disputes}}"
+    },
+    "kpi": {
+      "gmv": "Gross Volume (GMV)",
+      "gmvSub": "captured + released bookings",
+      "activeBookings": "Active bookings",
+      "jobsEnabled": "Care hours completed",
+      "hours": "hours",
+      "caregivers": "Caregivers",
+      "employers": "Employers",
+      "users": "Users",
+      "pendingDocs": "Pending documents",
+      "disputes": "Open disputes"
+    },
+    "verifications": {
+      "title": "Verification Queue",
+      "subtitle": "Documents awaiting review by the Riaya team.",
+      "empty": "No documents pending. ✓",
+      "view": "View",
+      "approve": "Approve",
+      "reject": "Reject",
+      "notePlaceholder": "Admin note (optional)",
+      "viewing": "Document preview",
+      "close": "Close",
+      "signedUrlNote": "Signed link valid for 15 minutes. Access is logged.",
+      "viewError": "Unable to generate secure link.",
+      "reviewError": "Operation failed. Please try again."
+    },
+    "disputes": {
+      "title": "Open Disputes",
+      "subtitle": "Each dispute holds escrow until manually resolved.",
+      "empty": "No open disputes. ✓",
+      "bookingId": "Booking #{id}",
+      "caregiverPayout": "Caregiver payout: {amount}",
+      "escrow": "Escrow",
+      "releaseToCare": "Release to caregiver",
+      "refundFamily": "Refund family",
+      "irreversible": "This action is irreversible.",
+      "resolveError": "Resolution failed. Please try again."
+    },
+    "escrow": {
+      "title": "Escrow Health",
+      "subtitle": "Live view of escrow status.",
+      "byStatus": "By status",
+      "nEscrows": "{count, plural, one {# escrow} other {# escrows}}",
+      "total": "Total",
+      "stuckTitle": "Stuck authorizations (> 48h)",
+      "noStuck": "No stuck authorizations. ✓",
+      "authorizedAt": "Authorized on {date}",
+      "statuses": {
+        "pending": "Pending",
+        "authorized": "Authorized",
+        "captured": "Captured",
+        "released": "Released",
+        "refunded": "Refunded",
+        "disputed": "Disputed"
+      }
+    }
   }
 }

@@ -74,7 +74,7 @@ export function VerificationUpload() {
             name="file"
             required
             accept={ACCEPT}
-            className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--color-sage-50)] file:px-3 file:py-2 file:text-sm file:font-medium file:text-[var(--color-sage-700)]"
+            className="block w-full text-sm text-gray-600 file:me-3 file:rounded-lg file:border-0 file:bg-[var(--color-sage-50)] file:px-3 file:py-2 file:text-sm file:font-medium file:text-[var(--color-sage-700)]"
           />
           <p className="mt-1 text-xs text-gray-400">
             {t("fileConstraints", { mb: Math.round(MAX_DOC_BYTES / (1024 * 1024)) })}
