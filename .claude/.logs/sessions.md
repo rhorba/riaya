@@ -1,6 +1,29 @@
 # sessions
 <!-- append-only log — session start/end snapshots -->
 
+## SESSION_END — 2026-06-18 — E2E SUITE + DEMO VIDEO COMPLETE ✅
+
+**Delivered this session:**
+- 43/43 Playwright E2E tests passing — 5 spec files covering all 4 roles (family, caregiver, employer, admin)
+- `docs/riaya-e2e-demo.mp4` — 6.4 min / 5.9 MB / 1280×720, all 43 browser recordings merged via ffmpeg
+- Two bug fixes: `lte()` instead of `sql` template for Date in `getEscrowHealth()` (Drizzle hot-path); employer RBAC test corrected to match actual data-gated behaviour
+- `apps/web/.env.local` created (gitignored) for `next dev` without Turbopack
+- Committed `ab24521` + pushed to `github.com/rhorba/riaya` main
+
+**Current state (as of 2026-06-18):**
+- All sprints 0–7 complete ✅. DoD §12: 22/22. v0.1 SHIPPED.
+- Unit/integration: 175 tests, 99.69% stmt coverage
+- E2E: 43/43 Playwright passing
+- `docs/riaya-e2e-demo.mp4` committed at project root
+- Server mode: `next dev` (Webpack, no `--turbopack`) — Turbopack fails to resolve `.js`→`.ts` imports in current config
+- Dev server needs `apps/web/.env.local` (gitignored) — copy root `.env` there before starting
+
+**RESUME INSTRUCTIONS:**
+1. Check DoD §12 for any remaining gaps if continuing feature work
+2. v0.2 backlog items (from CLAUDE.md §4): native mobile, SMS (Infobip), real CIN API, insurance (RMA Watanya), recurring booking, GPS check-in
+3. `pnpm dev` must be run from `apps/web/` with `DATABASE_URL` + `DATABASE_URL_ADMIN` loaded (via `.env.local` in `apps/web/`)
+4. No pending commits — `git status` is clean, `origin/main` is up to date
+
 ## SESSION_END — 2026-06-16 (b) — SPRINT 5 COMPLETE ✅
 
 Sprint: 5 — DONE (Verification system + Reviews + Notifications + Email). Awaiting Sprint 6 approval. **NOT yet committed/pushed at time of writing — commit + push to `main` next.**
@@ -286,3 +309,42 @@ Key decisions locked in:
 - next-intl v3 with [locale] App Router layout, dir=rtl for ar
 - Tailwind v4 with @tailwindcss/postcss, tokens in CSS @theme block
 - Auth.js v5 (next-auth@^5.0.0)
+
+## SESSION_END — 2026-06-17 — SPRINT 7 COMPLETE ✅ — v0.1 SHIPPED
+
+Sprint: 7 — DONE. Security hardening + incident reporting + SEO + health check. Pushed @ `802e251`.
+
+**DoD §12 — 22/22 COMPLETE:**
+- [x] Auth: signup/login family/caregiver/employer/admin; email verification
+- [x] Caregiver profile: create/edit, care types, rates, availability calendar
+- [x] Family profile: create/edit, children records
+- [x] Employer account: create, employees, benefit budget
+- [x] Caregiver search: public SSR, filterable (type/city/price/verification)
+- [x] Caregiver public profile page (SSR + OG metadata)
+- [x] Booking request: family → caregiver with date/time/duration/notes
+- [x] Booking accept/decline by caregiver
+- [x] Booking state machine: requested → confirmed → in_progress → completed
+- [x] Availability calendar: caregiver sets slots; booking checks slots
+- [x] Payments & escrow: pre-authorize → capture → release post-review
+- [x] Employer subsidy: deducted from booking; employer invoiced monthly
+- [x] Reviews: mutual mandatory post-completion; feed rating + verification level
+- [x] Verification document upload: CIN/health_cert/police_clearance
+- [x] Admin verification queue: approve/reject → update verification level
+- [x] Incident reporting + dispute queue: raiseDispute (family+caregiver) → admin queue
+- [x] Notifications: in-app for all key events
+- [x] Email: welcome/booking confirmation/payout receipt/review request (Resend)
+- [x] Money: integer centimes everywhere; formatted on display
+- [x] Audit log: all financial mutations
+- [x] FR/AR fully translated; RTL correct (366 keys, zero gaps)
+- [x] pnpm build ✓ · pnpm test 95/95 ✓ · pnpm lint ✓
+- [x] Demo seed loads (sara/fatima/drh@demo / demo1234)
+- [x] docker compose up -d + pnpm build + /api/health
+
+**Sprint 7 completions:**
+- S7-01: HTTP security headers (HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CSP report-only) in next.config.ts
+- S7-02: Login rate limiting — 5 failures/15-min sliding window → lockout; wired into Auth.js credentials authorize
+- S7-03: Incident reporting — raiseDispute() for family + caregiver; booking in_progress→disputed; holdEscrowForDispute (captured→disputed); other party notified; admin dispute queue picks it up
+- S7-04: OG metadata on /caregivers/[id] (profile photo, bio) and /search
+- S7-05: /api/health (DB ping → 200 ok / 503 unreachable)
+- S7-06: Tests 95/95; i18n parity 366 keys; all DoD items verified
+- S7-07: Snapshot + push
