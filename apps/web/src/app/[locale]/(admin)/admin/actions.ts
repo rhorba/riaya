@@ -21,7 +21,7 @@ import {
   withUserContext,
 } from "@riaya/db";
 import { assertEscrowTransition, gateway } from "@riaya/payments";
-import { and, count, eq, inArray, sql, sum } from "drizzle-orm";
+import { and, count, eq, inArray, lte, sql, sum } from "drizzle-orm";
 
 // ─── KPIs ────────────────────────────────────────────────────────────────────
 
@@ -274,7 +274,7 @@ export type EscrowHealth = {
     escrowId: string;
     bookingId: string;
     caregiverName: string;
-    authorizedAt: Date | null;
+    authorizedAt: string | null;
     familyPaysCentimes: number;
   }>;
 };
@@ -305,7 +305,7 @@ export async function getEscrowHealth(): Promise<EscrowHealth> {
       .from(escrows)
       .innerJoin(bookings, eq(escrows.bookingId, bookings.id))
       .innerJoin(caregiverProfiles, eq(escrows.caregiverId, caregiverProfiles.id))
-      .where(and(eq(escrows.status, "authorized"), sql`${escrows.authorizedAt} < ${cutoff}`))
+      .where(and(eq(escrows.status, "authorized"), lte(escrows.authorizedAt, cutoff)))
       .orderBy(escrows.authorizedAt);
 
     return {
@@ -314,7 +314,10 @@ export async function getEscrowHealth(): Promise<EscrowHealth> {
         count: Number(r.count),
         totalCentimes: Number(r.totalCentimes ?? 0),
       })),
-      stuckAuthorized,
+      stuckAuthorized: stuckAuthorized.map((r) => ({
+        ...r,
+        authorizedAt: r.authorizedAt ? r.authorizedAt.toISOString() : null,
+      })),
     };
   });
 }
