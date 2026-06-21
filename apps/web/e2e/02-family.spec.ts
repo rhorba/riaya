@@ -11,8 +11,8 @@ test.describe("Family authentication", () => {
     await page.waitForLoadState("networkidle");
 
     await expect(page.locator("h1").first()).toContainText(/connecter|connexion/i);
-    await expect(page.locator('#email')).toBeVisible();
-    await expect(page.locator('#password')).toBeVisible();
+    await expect(page.locator("#email")).toBeVisible();
+    await expect(page.locator("#password")).toBeVisible();
     await page.screenshot({ path: "test-results/screenshots/02-login-page.png" });
   });
 
@@ -20,11 +20,14 @@ test.describe("Family authentication", () => {
     await page.goto("/fr/auth/login");
     await page.waitForLoadState("networkidle");
 
-    await page.locator('#email').fill(DEMO.family.email);
-    await page.locator('#password').fill(DEMO.family.password);
+    await page.locator("#email").fill(DEMO.family.email);
+    await page.locator("#password").fill(DEMO.family.password);
     await page.screenshot({ path: "test-results/screenshots/02-login-filled.png" });
 
-    await page.getByRole("button", { name: /se connecter/i }).first().click();
+    await page
+      .getByRole("button", { name: /se connecter/i })
+      .first()
+      .click();
     await page.waitForURL((url) => !url.pathname.includes("/auth/login"), { timeout: 20000 });
     await page.waitForLoadState("networkidle");
 
@@ -39,9 +42,12 @@ test.describe("Family authentication", () => {
     await page.goto("/fr/auth/login");
     await page.waitForLoadState("networkidle");
 
-    await page.locator('#email').fill(DEMO.family.email);
-    await page.locator('#password').fill("wrongpassword");
-    await page.getByRole("button", { name: /se connecter/i }).first().click();
+    await page.locator("#email").fill(DEMO.family.email);
+    await page.locator("#password").fill("wrongpassword");
+    await page
+      .getByRole("button", { name: /se connecter/i })
+      .first()
+      .click();
 
     await expect(page.getByRole("alert")).toBeVisible({ timeout: 8000 });
     await page.screenshot({ path: "test-results/screenshots/02-login-error.png" });
@@ -106,8 +112,8 @@ test.describe("Family booking flow", () => {
     await expect(firstCard).toBeVisible({ timeout: 15000 });
     const href = await firstCard.getAttribute("href");
     // href = "/caregivers/[id]" (without locale prefix)
-    const profileUrl = href?.startsWith("/fr") ? href : `/fr${href}`;
-    await page.goto(profileUrl!);
+    const profileUrl = href?.startsWith("/fr") ? href : `/fr${href ?? ""}`;
+    await page.goto(profileUrl);
     await page.waitForLoadState("networkidle");
 
     // Booking CTA for authenticated family
@@ -151,8 +157,8 @@ test.describe("Family signup", () => {
     await page.waitForLoadState("networkidle");
 
     await expect(page.locator("h1").first()).toBeVisible();
-    await expect(page.locator('#email')).toBeVisible();
-    await expect(page.locator('#password')).toBeVisible();
+    await expect(page.locator("#email")).toBeVisible();
+    await expect(page.locator("#password")).toBeVisible();
     // Role selector — 3 radio inputs, check first one is visible
     await expect(page.locator('[name="role"]').first()).toBeVisible();
     await page.screenshot({ path: "test-results/screenshots/02-signup-page.png" });

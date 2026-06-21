@@ -36,7 +36,8 @@ test.describe("Employer dashboard", () => {
       (content?.includes("MAD") ||
         content?.includes("employé") ||
         content?.includes("budget") ||
-        content?.includes("avantage")) ?? false;
+        content?.includes("avantage")) ??
+      false;
     expect(hasEmployerContent).toBe(true);
     await page.screenshot({ path: "test-results/screenshots/04-employer-account.png" });
   });

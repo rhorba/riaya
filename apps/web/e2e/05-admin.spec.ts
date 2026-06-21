@@ -37,7 +37,8 @@ test.describe("Admin dashboard", () => {
         content?.includes("réservation") ||
         content?.includes("vérification") ||
         content?.includes("GMV") ||
-        content?.includes("assistante")) ?? false;
+        content?.includes("assistante")) ??
+      false;
     expect(hasAdminContent).toBe(true);
     await page.screenshot({ path: "test-results/screenshots/05-admin-dashboard.png" });
   });
@@ -94,9 +95,6 @@ test.describe("Admin dashboard", () => {
     // Nav links to verification, disputes, escrow
     const nav = page.locator("nav, aside, [role='navigation']").first();
     if (await nav.isVisible()) {
-      const navText = await nav.textContent();
-      const hasAdminLinks =
-        (navText?.includes("vérif") || navText?.includes("litige") || navText?.includes("escrow")) ?? false;
       // Just verify the admin section loads — not strictly required to have all nav links on dashboard
       expect(await page.locator("main").isVisible()).toBe(true);
     }

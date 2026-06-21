@@ -74,7 +74,10 @@ test.describe("Caregiver dashboard", () => {
     // Should mention CIN or documents
     const content = await page.textContent("main");
     const hasDocContent =
-      (content?.includes("CIN") || content?.includes("document") || content?.includes("vérification")) ?? false;
+      (content?.includes("CIN") ||
+        content?.includes("document") ||
+        content?.includes("vérification")) ??
+      false;
     expect(hasDocContent).toBe(true);
     await page.screenshot({ path: "test-results/screenshots/03-caregiver-verification.png" });
   });
