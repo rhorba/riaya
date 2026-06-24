@@ -116,11 +116,11 @@ test.describe("Family booking flow", () => {
     await page.goto(profileUrl);
     await page.waitForLoadState("networkidle");
 
-    // Booking CTA for authenticated family
+    // Booking CTA for authenticated family must be present
     const bookLink = page.locator('a[href*="book"]').first();
     const bookBtn = page.getByRole("button", { name: /réserver|book/i }).first();
     const hasBooking = (await bookLink.isVisible()) || (await bookBtn.isVisible());
-    expect(hasBooking || (await page.locator("main").isVisible())).toBe(true);
+    expect(hasBooking).toBe(true);
     await page.screenshot({ path: "test-results/screenshots/02-family-profile-view.png" });
   });
 

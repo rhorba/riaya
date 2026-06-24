@@ -43,10 +43,7 @@ test.describe("Caregiver dashboard", () => {
 
     await expect(page.locator("main")).toBeVisible();
     // Should have a form with bio, rates etc.
-    const form = page.locator("form").first();
-    if (await form.isVisible()) {
-      await expect(form).toBeVisible();
-    }
+    await expect(page.locator("form").first()).toBeVisible();
     await page.screenshot({ path: "test-results/screenshots/03-caregiver-profile.png" });
   });
 
